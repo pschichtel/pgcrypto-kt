@@ -2,9 +2,6 @@ package tel.schich.pgcryptokt
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import tel.schich.pgcrypto.InvalidDataOrPassphraseException
-import tel.schich.pgcrypto.pgp_sym_decrypt
-import tel.schich.pgcrypto.pgp_sym_encrypt
 import kotlin.test.assertEquals
 
 class DirectTests {

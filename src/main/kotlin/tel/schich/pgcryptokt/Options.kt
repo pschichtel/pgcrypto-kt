@@ -1,4 +1,4 @@
-package tel.schich.pgcrypto
+package tel.schich.pgcryptokt
 
 import org.bouncycastle.bcpg.CompressionAlgorithmTags
 import org.bouncycastle.bcpg.HashAlgorithmTags

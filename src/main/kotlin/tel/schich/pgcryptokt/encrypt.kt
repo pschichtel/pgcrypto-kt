@@ -1,4 +1,4 @@
-package tel.schich.pgcrypto
+package tel.schich.pgcryptokt
 
 import org.bouncycastle.openpgp.PGPCompressedDataGenerator
 import org.bouncycastle.openpgp.PGPEncryptedDataGenerator

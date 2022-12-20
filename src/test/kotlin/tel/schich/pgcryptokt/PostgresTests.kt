@@ -7,9 +7,6 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
-import tel.schich.pgcrypto.pgp_sym_decrypt
-import tel.schich.pgcrypto.pgp_sym_encrypt
-import tel.schich.pgcryptokt.PostgresTests.Companion.runSql
 import java.sql.Connection
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

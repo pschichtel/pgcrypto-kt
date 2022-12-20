@@ -1,10 +1,7 @@
-package tel.schich.pgcrypto
+package tel.schich.pgcryptokt
 
 import org.bouncycastle.openpgp.PGPObjectFactory
-import org.bouncycastle.openpgp.PGPUtil
-import org.bouncycastle.openpgp.bc.BcPGPPublicKeyRingCollection
 import org.bouncycastle.openpgp.operator.bc.BcPGPDigestCalculatorProvider
-import java.io.ByteArrayInputStream
 import java.util.Random
 import kotlin.math.roundToInt
 

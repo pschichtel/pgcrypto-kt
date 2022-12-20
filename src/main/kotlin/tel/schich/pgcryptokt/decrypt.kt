@@ -1,4 +1,4 @@
-package tel.schich.pgcrypto
+package tel.schich.pgcryptokt
 
 import org.bouncycastle.bcpg.BCPGInputStream
 import org.bouncycastle.bcpg.LiteralDataPacket
@@ -12,7 +12,6 @@ import org.bouncycastle.openpgp.bc.BcPGPSecretKeyRingCollection
 import org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator
 import org.bouncycastle.openpgp.operator.bc.BcPBEDataDecryptorFactory
 import org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyDecryptorBuilder
-import org.bouncycastle.openpgp.operator.bc.BcPGPKeyConverter
 import org.bouncycastle.openpgp.operator.bc.BcPublicKeyDataDecryptorFactory
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream

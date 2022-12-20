@@ -1,4 +1,4 @@
-package tel.schich.pgcrypto
+package tel.schich.pgcryptokt
 
 import java.nio.charset.Charset
 

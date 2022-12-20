@@ -1,4 +1,4 @@
-package tel.schich.pgcrypto
+package tel.schich.pgcryptokt
 
 import org.bouncycastle.openpgp.PGPPBEEncryptedData
 import org.bouncycastle.openpgp.PGPPublicKeyEncryptedData
