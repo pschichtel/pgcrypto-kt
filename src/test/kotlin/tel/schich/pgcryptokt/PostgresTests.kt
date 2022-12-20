@@ -1,0 +1,120 @@
+package tel.schich.pgcryptokt
+
+import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.Test
+import org.postgresql.ds.PGSimpleDataSource
+import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
+import org.testcontainers.utility.DockerImageName
+import tel.schich.pgcrypto.pgp_sym_decrypt
+import tel.schich.pgcrypto.pgp_sym_encrypt
+import tel.schich.pgcryptokt.PostgresTests.Companion.runSql
+import java.sql.Connection
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+@Testcontainers
+class PostgresTests {
+    @Test
+    fun decrypt() {
+        val clearData = "a".repeat(70000)
+        val passphrase = "password"
+        val encryptedData = queryOne<ByteArray>("SELECT pgp_sym_encrypt(?, ?);", clearData, passphrase)
+        val dbDecryptedData = queryOne<String>("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase)
+        val localDecryptedData = pgp_sym_decrypt(encryptedData, passphrase)
+
+        assertEquals(dbDecryptedData, localDecryptedData)
+        assertEquals(clearData, localDecryptedData)
+    }
+
+    @Test
+    fun encrypt() {
+
+        val clearData = "a".repeat(70000)
+        val passphrase = "password"
+        val dbEncryptedData = queryOne<ByteArray>("SELECT pgp_sym_encrypt(?, ?);", clearData, passphrase)
+        val localEncryptedData = pgp_sym_encrypt(clearData, passphrase)
+
+        val decryptedFromDb = pgp_sym_decrypt(dbEncryptedData, passphrase)
+        val decryptedFromLocal = pgp_sym_decrypt(localEncryptedData, passphrase)
+
+        assertEquals(decryptedFromDb, decryptedFromLocal)
+    }
+
+    @Test
+    fun decryptRoundTrip() {
+        val clearData = "a".repeat(70000)
+        val passphrase = "password"
+        val encryptedData = queryOne<ByteArray>("SELECT pgp_sym_encrypt(?, ?);", clearData, passphrase)
+        assertTrue { encryptedData.isNotEmpty() }
+        val decryptedData = pgp_sym_decrypt(encryptedData, passphrase)
+
+        assertEquals(clearData, decryptedData)
+    }
+
+    @Test
+    fun encryptRoundTrip() {
+        val clearData = "a".repeat(70000)
+        val passphrase = "password"
+        val encryptedData = pgp_sym_encrypt(clearData, passphrase)
+        assertTrue { encryptedData.isNotEmpty() }
+        val decryptedData = queryOne<String>("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase)
+
+        assertEquals(clearData, decryptedData)
+    }
+
+    companion object {
+        @JvmStatic
+        @Container
+        private val postgresContainer = PostgreSQLContainer(DockerImageName.parse("postgres:13.9"))
+
+        private val dataSource = lazy {
+            val dataSource = PGSimpleDataSource()
+            dataSource.setUrl(postgresContainer.jdbcUrl)
+            dataSource.user = postgresContainer.username
+            dataSource.password = postgresContainer.password
+            dataSource.connection.use(::initializeDb)
+            dataSource
+        }
+
+        private fun initializeDb(connection: Connection) {
+            runSql(connection, "CREATE EXTENSION IF NOT EXISTS pgcrypto;")
+        }
+
+        private inline fun <T> withConnection(block: Connection.() -> T): T {
+            return dataSource.value.connection.use(block)
+        }
+
+        private fun runSql(connection: Connection, @Language("SQL") sql: String) {
+            connection.createStatement().use {
+                it.execute(sql)
+            }
+        }
+
+        private fun runSql(@Language("SQL") sql: String) {
+            withConnection {
+                runSql(this, sql)
+            }
+        }
+
+        private inline fun <reified T : Any> queryOne(@Language("SQL") sql: String, vararg args: Any?): T {
+            return withConnection {
+                prepareStatement(sql).use {
+                    for ((i, arg) in args.withIndex()) {
+                        it.setObject(i + 1, arg)
+                    }
+                    val result = it.executeQuery()
+                    result.next()
+                    when (T::class) {
+                        String::class -> result.getString(1)
+                        ByteArray::class -> result.getBytes(1)
+                        Int::class -> result.getInt(1)
+                        else -> result.getObject(1)
+                    } as T
+                }
+            }
+        }
+    }
+
+}
