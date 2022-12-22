@@ -9,7 +9,6 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
 import java.sql.Connection
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 @Testcontainers
 class PostgresTests {
@@ -44,7 +43,6 @@ class PostgresTests {
         val clearData = "a".repeat(70000)
         val passphrase = "password"
         val encryptedData = queryOne<ByteArray>("SELECT pgp_sym_encrypt(?, ?);", clearData, passphrase)
-        assertTrue { encryptedData.isNotEmpty() }
         val decryptedData = pgp_sym_decrypt(encryptedData, passphrase)
 
         assertEquals(clearData, decryptedData)
@@ -55,10 +53,29 @@ class PostgresTests {
         val clearData = "a".repeat(70000)
         val passphrase = "password"
         val encryptedData = pgp_sym_encrypt(clearData, passphrase)
-        assertTrue { encryptedData.isNotEmpty() }
         val decryptedData = queryOne<String>("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase)
 
         assertEquals(clearData, decryptedData)
+    }
+
+    @Test
+    fun encryptWithCrLf() {
+        val clearData = "a\nb"
+        val passphrase = "password"
+        val encryptedData = pgp_sym_encrypt(clearData, passphrase, "convert-crlf=1")
+
+        assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?, 'convert-crlf=1');", encryptedData, passphrase))
+        assertEquals("a\r\nb", queryOne("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?, 'convert-crlf=0');", encryptedData, passphrase))
+    }
+
+    @Test
+    fun decryptWithCrLf() {
+        val clearData = "a\nb"
+        val passphrase = "password"
+        val encryptedData = queryOne<ByteArray>("SELECT pgp_sym_encrypt(?, ?, 'convert-crlf=1');", clearData, passphrase)
+
+        assertEquals(clearData, pgp_sym_decrypt(encryptedData, passphrase, "convert-crlf=1"))
+        assertEquals("a\r\nb", pgp_sym_decrypt(encryptedData, passphrase, "convert-crlf=0"))
     }
 
     companion object {
