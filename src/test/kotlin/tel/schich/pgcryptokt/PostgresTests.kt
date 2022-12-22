@@ -78,6 +78,24 @@ class PostgresTests {
         assertEquals("a\r\nb", pgp_sym_decrypt(encryptedData, passphrase, "convert-crlf=0"))
     }
 
+    @Test
+    fun encryptWithAes256() {
+        val clearData = "a\nb"
+        val passphrase = "password"
+        val encryptedData = pgp_sym_encrypt(clearData, passphrase, "cipher-algo=aes256")
+
+        assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase))
+    }
+
+    @Test
+    fun decryptWithAes256() {
+        val clearData = "a\nb"
+        val passphrase = "password"
+        val encryptedData = queryOne<ByteArray>("SELECT pgp_sym_encrypt(?, ?, 'cipher-algo=aes256');", clearData, passphrase)
+
+        assertEquals(clearData, pgp_sym_decrypt(encryptedData, passphrase))
+    }
+
     companion object {
         @JvmStatic
         @Container
