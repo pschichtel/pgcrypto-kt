@@ -114,7 +114,7 @@ data class AsymmetricDecryptionOptions(
 
 private val optionSeparator = """\s*,\s*""".toRegex()
 
-private fun parseOptions(optionsString: String): Map<String, String> {
+private fun parseOptions(optionsString: String): MutableMap<String, String> {
     return optionsString.trim().split(optionSeparator)
         .filter { it.isNotBlank() }
         .associate { option ->
@@ -125,10 +125,11 @@ private fun parseOptions(optionsString: String): Map<String, String> {
 
             Pair(option.substring(0, equalsPosition).trim().lowercase(), option.substring(equalsPosition + 1).trim())
         }
+        .toMutableMap()
 }
 
-private fun parseBooleanOption(options: Map<String, String>, name: String): Boolean? {
-    return when (val value = options[name]) {
+private fun parseBooleanOption(options: MutableMap<String, String>, name: String): Boolean? {
+    return when (val value = options.remove(name)) {
         null -> null
         "0" -> false
         "1" -> true
@@ -136,8 +137,8 @@ private fun parseBooleanOption(options: Map<String, String>, name: String): Bool
     }
 }
 
-private fun parseS2kCountOption(options: Map<String, String>): S2kIterationCount? {
-    val value = options["s2k-count"] ?: return null
+private fun parseS2kCountOption(options: MutableMap<String, String>): S2kIterationCount? {
+    val value = options.remove("s2k-count") ?: return null
     val intValue = try {
         value.toInt()
     } catch (e: NumberFormatException) {
@@ -149,8 +150,8 @@ private fun parseS2kCountOption(options: Map<String, String>): S2kIterationCount
     return S2kIterationCount(intValue)
 }
 
-private fun <T : Any> parseEnumOptions(options: Map<String, String>, name: String, mappings: Map<String, T>): T? {
-    val value = options[name]?.lowercase() ?: return null
+private fun <T : Any> parseEnumOptions(options: MutableMap<String, String>, name: String, mappings: Map<String, T>): T? {
+    val value = options.remove(name)?.lowercase() ?: return null
     return mappings[value] ?: throw IllegalArgumentException("Failed to parse option $name: Unknown value $value")
 }
 
@@ -190,9 +191,15 @@ private val s2kCipherAlgoMappings = mapOf(
     "aes256" to S2kCipherAlgo.AES256,
 )
 
+fun verifyAllOptionsConsumed(options: Map<String, String>) {
+    if (options.isNotEmpty()) {
+        error("Received unknown options: $options")
+    }
+}
+
 fun parseSymmetricEncryptionOptionsString(optionsString: String?): SymmetricEncryptionOptions {
     val options = parseOptions(optionsString ?: return SymmetricEncryptionOptions())
-    return SymmetricEncryptionOptions(
+    val result = SymmetricEncryptionOptions(
         cipherAlgo = parseEnumOptions(options, name = "cipher-algo", cipherAlgoMappings),
         compressAlgo = parseEnumOptions(options, name = "compress-algo", compressAlgoMappings),
         compressLevel = parseEnumOptions(options, "compress-level", compressLevelMappings),
@@ -205,11 +212,13 @@ fun parseSymmetricEncryptionOptionsString(optionsString: String?): SymmetricEncr
         s2kCipherAlgo = parseEnumOptions(options, name = "s2k-cipher-algo", s2kCipherAlgoMappings),
         unicodeMode = parseBooleanOption(options, name = "unicode-mode"),
     )
+    verifyAllOptionsConsumed(options)
+    return result
 }
 
 fun parseAsymmetricEncryptionOptionsString(optionsString: String?): AsymmetricEncryptionOptions {
     val options = parseOptions(optionsString ?: return AsymmetricEncryptionOptions())
-    return AsymmetricEncryptionOptions(
+    val result = AsymmetricEncryptionOptions(
         cipherAlgo = parseEnumOptions(options, name = "cipher-algo", cipherAlgoMappings),
         compressAlgo = parseEnumOptions(options, name = "compress-algo", compressAlgoMappings),
         compressLevel = parseEnumOptions(options, "compress-level", compressLevelMappings),
@@ -217,18 +226,24 @@ fun parseAsymmetricEncryptionOptionsString(optionsString: String?): AsymmetricEn
         disableMdc = parseBooleanOption(options, name = "disable-mdc"),
         unicodeMode = parseBooleanOption(options, name = "unicode-mode"),
     )
+    verifyAllOptionsConsumed(options)
+    return result
 }
 
 fun parseSymmetricDecryptionOptionsString(optionsString: String?): SymmetricDecryptionOptions {
     val options = parseOptions(optionsString ?: return SymmetricDecryptionOptions())
-    return SymmetricDecryptionOptions(
+    val result = SymmetricDecryptionOptions(
         convertCrLf = parseBooleanOption(options, name = "convert-crlf"),
     )
+    verifyAllOptionsConsumed(options)
+    return result
 }
 
 fun parseAsymmetricDecryptionOptionsString(optionsString: String?): AsymmetricDecryptionOptions {
     val options = parseOptions(optionsString ?: return AsymmetricDecryptionOptions())
-    return AsymmetricDecryptionOptions(
+    val result = AsymmetricDecryptionOptions(
         convertCrLf = parseBooleanOption(options, name = "convert-crlf"),
     )
+    verifyAllOptionsConsumed(options)
+    return result
 }
