@@ -83,7 +83,7 @@ fun encrypt(data: ByteArray, mode: EncryptionMode, dataType: DataType): ByteArra
         DataType.BINARY -> PGPLiteralData.BINARY
     }
     val literalDataGenerator = PGPLiteralDataGenerator()
-    outStream = literalDataGenerator.open(outStream, type, "", data.size.toLong(), Date())
+    outStream = literalDataGenerator.open(outStream, type, "", Date(), ByteArray(1 shl 14))
     if (mode.options.convertCrLf == true) {
         outStream = LfToCrlfOutputStream(outStream)
     }
@@ -94,5 +94,5 @@ fun encrypt(data: ByteArray, mode: EncryptionMode, dataType: DataType): ByteArra
     dataGenerator.close()
     outStream.close()
 
-    return output.toByteArray();
+    return output.toByteArray()
 }
