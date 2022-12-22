@@ -202,7 +202,7 @@ fun parseSymmetricEncryptionOptionsString(optionsString: String?): SymmetricEncr
     val result = SymmetricEncryptionOptions(
         cipherAlgo = parseEnumOptions(options, name = "cipher-algo", cipherAlgoMappings),
         compressAlgo = parseEnumOptions(options, name = "compress-algo", compressAlgoMappings),
-        compressLevel = parseEnumOptions(options, "compress-level", compressLevelMappings),
+        compressLevel = parseEnumOptions(options, name = "compress-level", compressLevelMappings),
         convertCrLf = parseBooleanOption(options, name = "convert-crlf"),
         disableMdc = parseBooleanOption(options, name = "disable-mdc"),
         sessKey = parseBooleanOption(options, name = "sess-key"),
