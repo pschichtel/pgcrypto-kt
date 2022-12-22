@@ -47,22 +47,12 @@ class LfToCrlfOutputStream(private val next: OutputStream) : OutputStream() {
 }
 
 class CrLfToLfInputStream(private val next: InputStream) : InputStream() {
-    private var buffered: Int = 0
-    private var hasBuffered: Boolean = false
-
     override fun read(): Int {
-        return if (hasBuffered) {
-            hasBuffered = false
-            buffered
-        } else {
-            buffered = next.read()
-            if (buffered == LF) {
-                hasBuffered = true
-                CR
-            } else {
-                buffered
-            }
+        val current = next.read()
+        if (current == CR) {
+            return next.read()
         }
+        return current
     }
 
     override fun close() {
