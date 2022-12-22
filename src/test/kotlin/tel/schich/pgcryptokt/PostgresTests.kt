@@ -96,6 +96,24 @@ class PostgresTests {
         assertEquals(clearData, pgp_sym_decrypt(encryptedData, passphrase))
     }
 
+    @Test
+    fun encryptWithCompression() {
+        val clearData = "a\nb"
+        val passphrase = "password"
+        val encryptedData = pgp_sym_encrypt(clearData, passphrase, "compress-algo=2,compress-level=9")
+
+        assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase))
+    }
+
+    @Test
+    fun decryptWithCompression() {
+        val clearData = "a\nb"
+        val passphrase = "password"
+        val encryptedData = queryOne<ByteArray>("SELECT pgp_sym_encrypt(?, ?, 'compress-algo=2,compress-level=9');", clearData, passphrase)
+
+        assertEquals(clearData, pgp_sym_decrypt(encryptedData, passphrase))
+    }
+
     companion object {
         @JvmStatic
         @Container

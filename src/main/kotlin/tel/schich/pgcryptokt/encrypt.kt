@@ -91,6 +91,7 @@ fun encrypt(data: ByteArray, mode: EncryptionMode, dataType: DataType): ByteArra
     outStream.write(data)
     outStream.flush()
     literalDataGenerator.close()
+    compressor?.close()
     dataGenerator.close()
     outStream.close()
 

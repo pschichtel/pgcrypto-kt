@@ -1,6 +1,9 @@
 package tel.schich.pgcryptokt
 
+import org.bouncycastle.apache.bzip2.CBZip2InputStream
 import org.bouncycastle.bcpg.BCPGInputStream
+import org.bouncycastle.bcpg.CompressedDataPacket
+import org.bouncycastle.bcpg.CompressionAlgorithmTags
 import org.bouncycastle.bcpg.LiteralDataPacket
 import org.bouncycastle.openpgp.PGPEncryptedData
 import org.bouncycastle.openpgp.PGPEncryptedDataList
@@ -16,6 +19,8 @@ import org.bouncycastle.openpgp.operator.bc.BcPublicKeyDataDecryptorFactory
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.util.zip.Inflater
+import java.util.zip.InflaterInputStream
 
 class InvalidDataOrPassphraseException(cause: Throwable?) : RuntimeException(cause)
 
@@ -40,7 +45,7 @@ fun encryptedDataFrom(data: ByteArray): Sequence<PGPEncryptedData> {
 fun decrypt(data: ByteArray, mode: DecryptionMode, textMode: Boolean): ByteArray {
     val output = ByteArrayOutputStream()
     val literalData = try {
-        val encryptedData = encryptedDataFrom(data)
+        val encryptedData = encryptedDataFrom(data).toList()
         val decryptedData = when (mode) {
             is DecryptionMode.PrivateKey -> {
                 val secretKeyDecryptor =
@@ -73,11 +78,17 @@ fun decrypt(data: ByteArray, mode: DecryptionMode, textMode: Boolean): ByteArray
                     }
             }
         }
-        decryptedData
-            .map { it.readPacket() }
-            .filterIsInstance<LiteralDataPacket>()
-            .firstOrNull()
-            ?: error("The encrypted data did not contain any data!")
+        decryptedData.firstNotNullOfOrNull {
+            when (val packet = it.readPacket()) {
+                is LiteralDataPacket -> packet
+                is CompressedDataPacket -> {
+                    val decompressed = decompressCompressedDataPacket(packet)
+                    BCPGInputStream.wrap(decompressed).readPacket() as? LiteralDataPacket
+                }
+
+                else -> null
+            }
+        } ?: error("The encrypted data did not contain any data!")
     } catch (e: Exception) {
         throw InvalidDataOrPassphraseException(e)
     }
@@ -103,4 +114,12 @@ fun decrypt(data: ByteArray, mode: DecryptionMode, textMode: Boolean): ByteArray
     output.close()
 
     return output.toByteArray()
+}
+
+private fun decompressCompressedDataPacket(packet: CompressedDataPacket): InputStream = when (packet.algorithm) {
+    CompressionAlgorithmTags.UNCOMPRESSED -> packet.inputStream
+    CompressionAlgorithmTags.ZIP -> InflaterInputStream(packet.inputStream, Inflater(true))
+    CompressionAlgorithmTags.ZLIB -> InflaterInputStream(packet.inputStream)
+    CompressionAlgorithmTags.BZIP2 -> CBZip2InputStream(packet.inputStream)
+    else -> error("Unsupported compression algorithm")
 }
