@@ -46,7 +46,7 @@ fun encrypt(data: ByteArray, mode: EncryptionMode, dataType: DataType): ByteArra
                 ?: error("The given keyring did not contain a public key!")
             BcPublicKeyKeyEncryptionMethodGenerator(publicKey)
         }
-        is EncryptionMode.Password -> when (mode.options.s2kMode ?: S2kMode.NO_SALT) {
+        is EncryptionMode.Password -> when (mode.options.s2kMode ?: S2kMode.VARIABLE_ITERATION_COUNT) {
 
             // TODO what about mode.options.sessKey ???
 
