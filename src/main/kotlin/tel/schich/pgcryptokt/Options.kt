@@ -43,12 +43,12 @@ enum class S2kDigestAlgo(val tag: Int) {
     SHA1(HashAlgorithmTags.SHA1),
 }
 
-enum class S2kCipherAlgo {
-    BF,
-    AES,
-    AES128,
-    AES192,
-    AES256,
+enum class S2kCipherAlgo(val tag: Int) {
+    BF(SymmetricKeyAlgorithmTags.BLOWFISH),
+    AES(SymmetricKeyAlgorithmTags.AES_128),
+    AES128(SymmetricKeyAlgorithmTags.AES_128),
+    AES192(SymmetricKeyAlgorithmTags.AES_192),
+    AES256(SymmetricKeyAlgorithmTags.AES_256),
 }
 
 sealed interface Options {

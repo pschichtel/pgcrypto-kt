@@ -44,31 +44,43 @@ fun encrypt(data: ByteArray, mode: EncryptionMode, dataType: DataType): ByteArra
                 .filter { it.isEncryptionKey }
                 .firstOrNull()
                 ?: error("The given keyring did not contain a public key!")
-            BcPublicKeyKeyEncryptionMethodGenerator(publicKey)
+            listOf(BcPublicKeyKeyEncryptionMethodGenerator(publicKey))
         }
-        is EncryptionMode.Password -> when (mode.options.s2kMode ?: S2kMode.VARIABLE_ITERATION_COUNT) {
+        is EncryptionMode.Password -> {
 
-            // TODO what about mode.options.sessKey ???
 
-            S2kMode.NO_SALT -> BcPBEKeyEncryptionMethodGenerator(mode.password)
-            S2kMode.FIXED_ITERATION_COUNT -> {
-                BcPBEKeyEncryptionMethodGenerator(mode.password, digestCalculator(mode.options.s2kDigestAlgo ?: S2kDigestAlgo.SHA1))
+            val mainGenerator = when (mode.options.s2kMode ?: S2kMode.VARIABLE_ITERATION_COUNT) {
+                S2kMode.NO_SALT -> BcPBEKeyEncryptionMethodGenerator(mode.password)
+                S2kMode.FIXED_ITERATION_COUNT -> {
+                    BcPBEKeyEncryptionMethodGenerator(mode.password, digestCalculator(mode.options.s2kDigestAlgo ?: S2kDigestAlgo.SHA1))
+                }
+
+                S2kMode.VARIABLE_ITERATION_COUNT -> {
+                    val iterationCount =
+                        mode.options.s2kCount?.count ?: randomIn(secureRandom, S2kIterationCount.DefaultIterationsRange)
+                    val singleByteIterationCount = remap(iterationCount, S2kIterationCount.ValidRange, 0..255)
+                    BcPBEKeyEncryptionMethodGenerator(
+                        mode.password,
+                        digestCalculator(mode.options.s2kDigestAlgo ?: S2kDigestAlgo.SHA1),
+                        singleByteIterationCount
+                    )
+                }
             }
-
-            S2kMode.VARIABLE_ITERATION_COUNT -> {
-                val iterationCount =
-                    mode.options.s2kCount?.count ?: randomIn(secureRandom, S2kIterationCount.DefaultIterationsRange)
-                val singleByteIterationCount = remap(iterationCount, S2kIterationCount.ValidRange, 0..255)
-                BcPBEKeyEncryptionMethodGenerator(
-                    mode.password,
-                    digestCalculator(mode.options.s2kDigestAlgo ?: S2kDigestAlgo.SHA1),
-                    singleByteIterationCount
-                )
+            if (mode.options.sessKey == true) {
+                val algo = mode.options.s2kCipherAlgo?.tag ?: cipherAlgo.tag
+                if (algo != cipherAlgo.tag) {
+                    TODO("Different ciphers for the session key and data is not supported, yet!")
+                }
+                listOf(mainGenerator, DummyEncryptionMethodGenerator)
+            } else {
+                listOf(mainGenerator)
             }
         }
     }
 
-    dataGenerator.addMethod(encryptionMethodGenerator)
+    for (methodGenerator in encryptionMethodGenerator) {
+        dataGenerator.addMethod(methodGenerator)
+    }
 
     val output = ByteArrayOutputStream()
     var outStream: OutputStream = dataGenerator.open(output, ByteArray(1 shl 14))
