@@ -6,7 +6,6 @@ import org.bouncycastle.openpgp.PGPLiteralData
 import org.bouncycastle.openpgp.PGPLiteralDataGenerator
 import org.bouncycastle.openpgp.PGPUtil
 import org.bouncycastle.openpgp.bc.BcPGPPublicKeyRingCollection
-import org.bouncycastle.openpgp.operator.bc.BcPBEKeyEncryptionMethodGenerator
 import org.bouncycastle.openpgp.operator.bc.BcPGPDataEncryptorBuilder
 import org.bouncycastle.openpgp.operator.bc.BcPublicKeyKeyEncryptionMethodGenerator
 import java.io.ByteArrayInputStream
@@ -47,19 +46,22 @@ fun encrypt(data: ByteArray, mode: EncryptionMode, dataType: DataType): ByteArra
             listOf(BcPublicKeyKeyEncryptionMethodGenerator(publicKey))
         }
         is EncryptionMode.Password -> {
-
+            val sessKeyEncryptionAlgo =
+                if (mode.options.sessKey == true) mode.options.s2kCipherAlgo?.tag ?: cipherAlgo.tag
+                else cipherAlgo.tag
 
             val mainGenerator = when (mode.options.s2kMode ?: S2kMode.VARIABLE_ITERATION_COUNT) {
-                S2kMode.NO_SALT -> BcPBEKeyEncryptionMethodGenerator(mode.password)
+                S2kMode.NO_SALT -> CustomSessKeyAlgoBcPBEKeyEncryptionMethodGenerator(sessKeyEncryptionAlgo, mode.password)
                 S2kMode.FIXED_ITERATION_COUNT -> {
-                    BcPBEKeyEncryptionMethodGenerator(mode.password, digestCalculator(mode.options.s2kDigestAlgo ?: S2kDigestAlgo.SHA1))
+                    CustomSessKeyAlgoBcPBEKeyEncryptionMethodGenerator(sessKeyEncryptionAlgo, mode.password, digestCalculator(mode.options.s2kDigestAlgo ?: S2kDigestAlgo.SHA1))
                 }
 
                 S2kMode.VARIABLE_ITERATION_COUNT -> {
                     val iterationCount =
                         mode.options.s2kCount?.count ?: randomIn(secureRandom, S2kIterationCount.DefaultIterationsRange)
                     val singleByteIterationCount = remap(iterationCount, S2kIterationCount.ValidRange, 0..255)
-                    BcPBEKeyEncryptionMethodGenerator(
+                    CustomSessKeyAlgoBcPBEKeyEncryptionMethodGenerator(
+                        sessKeyEncryptionAlgo,
                         mode.password,
                         digestCalculator(mode.options.s2kDigestAlgo ?: S2kDigestAlgo.SHA1),
                         singleByteIterationCount
@@ -67,10 +69,6 @@ fun encrypt(data: ByteArray, mode: EncryptionMode, dataType: DataType): ByteArra
                 }
             }
             if (mode.options.sessKey == true) {
-                val algo = mode.options.s2kCipherAlgo?.tag ?: cipherAlgo.tag
-                if (algo != cipherAlgo.tag) {
-                    TODO("Different ciphers for the session key and data is not supported, yet!")
-                }
                 listOf(mainGenerator, DummyEncryptionMethodGenerator)
             } else {
                 listOf(mainGenerator)

@@ -205,6 +205,42 @@ class PostgresTests {
         assertEquals(clearData, pgp_sym_decrypt(encryptedData, passphrase))
     }
 
+    @Test
+    fun encryptWithSessKeyAndCipher() {
+        val clearData = "a\nb"
+        val passphrase = "password"
+
+        fun testAlgo(algo: String) {
+            val encryptedData = pgp_sym_encrypt(clearData, passphrase, "sess-key=1,s2k-cipher-algo=$algo")
+
+            assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase))
+        }
+
+        testAlgo("bf")
+        testAlgo("aes")
+        testAlgo("aes128")
+        testAlgo("aes192")
+        testAlgo("aes256")
+    }
+
+    @Test
+    fun decryptWithSessKeyAndCipher() {
+        val clearData = "a\nb"
+        val passphrase = "password"
+
+        fun testAlgo(algo: String) {
+            val encryptedData = queryOne<ByteArray>("SELECT pgp_sym_encrypt(?, ?, 'sess-key=1,s2k-cipher-algo=$algo');", clearData, passphrase)
+
+            assertEquals(clearData, pgp_sym_decrypt(encryptedData, passphrase))
+        }
+
+        testAlgo("bf")
+        testAlgo("aes")
+        testAlgo("aes128")
+        testAlgo("aes192")
+        testAlgo("aes256")
+    }
+
     companion object {
         @JvmStatic
         @Container
