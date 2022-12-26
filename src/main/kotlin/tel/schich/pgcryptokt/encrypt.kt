@@ -11,7 +11,6 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.lang.IllegalArgumentException
-import java.security.SecureRandom
 import java.util.Date
 
 private fun digestCalculator(algo: S2kDigestAlgo) = digestCalculatorProvider.get(algo.tag)
@@ -24,7 +23,7 @@ sealed interface EncryptionMode {
 
 fun encrypt(data: ByteArray, mode: EncryptionMode, dataType: DataType): ByteArray {
 
-    val secureRandom = SecureRandom()
+    val secureRandom = random.get()
     val cipherAlgo = mode.options.cipherAlgo ?: CipherAlgo.AES128
     val encryptorBuilder = BcPGPDataEncryptorBuilder(cipherAlgo.tag)
         .setSecureRandom(secureRandom)

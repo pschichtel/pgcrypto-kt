@@ -11,8 +11,11 @@ import org.bouncycastle.openpgp.operator.bc.BcPBEKeyEncryptionMethodGenerator
 import org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyDecryptorBuilder
 import org.bouncycastle.openpgp.operator.bc.BcPGPDigestCalculatorProvider
 import java.io.OutputStream
+import java.security.SecureRandom
 import java.util.Random
 import kotlin.math.roundToInt
+
+internal val random = ThreadLocal.withInitial { SecureRandom() }
 
 fun remap(value: Int, from: IntRange, to: IntRange): Int {
     return to.first + (value / (from.last - from.first).toDouble() * (to.last - to.first)).roundToInt()
