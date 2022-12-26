@@ -52,7 +52,11 @@ private fun parseType(s: String): AlgorithmType {
     }
 }
 
-private fun processWithIv(data: ByteArray, key: ByteArray, iv: ByteArray?, type: String, encrypt: Boolean): ByteArray {
+private fun processWithIv(data: ByteArray?, key: ByteArray?, iv: ByteArray?, type: String?, encrypt: Boolean): ByteArray? {
+    if (data == null || key == null || type == null) {
+        return null
+    }
+
     val (algo, mode, padding) = parseType(type)
     val algoName = when (algo) {
         Algorithm.BF -> "Blowfish"
@@ -90,18 +94,24 @@ private fun processWithIv(data: ByteArray, key: ByteArray, iv: ByteArray?, type:
     return cipher.doFinal(data)
 }
 
-fun encrypt(data: ByteArray, key: ByteArray, type: String): ByteArray {
+fun encrypt(data: ByteArray?, key: ByteArray?, type: String?): ByteArray? {
     return processWithIv(data, key, iv = null, type, encrypt = true)
 }
 
-fun encrypt_iv(data: ByteArray, key: ByteArray, iv: ByteArray, type: String): ByteArray {
+fun encrypt_iv(data: ByteArray?, key: ByteArray?, iv: ByteArray?, type: String?): ByteArray? {
+    if (iv == null) {
+        return null
+    }
     return processWithIv(data, key, iv, type, encrypt = true)
 }
 
-fun decrypt(data: ByteArray, key: ByteArray, type: String): ByteArray {
+fun decrypt(data: ByteArray?, key: ByteArray?, type: String?): ByteArray? {
     return processWithIv(data, key, iv = null, type, encrypt = false)
 }
 
-fun decrypt_iv(data: ByteArray, key: ByteArray, iv: ByteArray, type: String): ByteArray {
+fun decrypt_iv(data: ByteArray?, key: ByteArray?, iv: ByteArray?, type: String?): ByteArray? {
+    if (iv == null) {
+        return null
+    }
     return processWithIv(data, key, iv, type, encrypt = false)
 }
