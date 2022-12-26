@@ -30,7 +30,7 @@ class DirectTests {
 
     @Test
     fun randomBytesCanBeRequested() {
-        assertEquals(MAX_RANDOM_BYTES, get_random_bytes(MAX_RANDOM_BYTES)!!.size)
+        assertEquals(MAX_RANDOM_BYTES, get_random_bytes(MAX_RANDOM_BYTES).size)
     }
 
     @Test
