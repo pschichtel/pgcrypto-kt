@@ -10,7 +10,9 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
+import tel.schich.pgcryptokt.hashing.crypt
 import tel.schich.pgcryptokt.hashing.digest
+import tel.schich.pgcryptokt.hashing.gen_salt
 import tel.schich.pgcryptokt.hashing.hmac
 import tel.schich.pgcryptokt.pgp.S2kMode
 import tel.schich.pgcryptokt.pgp.armor
@@ -546,6 +548,30 @@ class PostgresTests {
         test(algo = "bf", mode = "cbc", padding = "none")
         test(algo = "bf", mode = "ecb", padding = "pkcs")
         test(algo = "bf", mode = "ecb", padding = "none")
+    }
+
+    @Test
+    fun cryptWithLocalSalt() {
+        val password = "0123456789012345"
+
+        fun test(type: String) {
+            val pgSalt = queryOne<String>("SELECT gen_salt(?)", type)
+            val localSalt = gen_salt(type)
+
+            val pgHashWithLocalSalt = queryOne<String>("SELECT crypt(?, ?)", password, localSalt)
+            val localHashWithLocalSalt = crypt(password, localSalt)
+            assertEquals(pgHashWithLocalSalt, localHashWithLocalSalt)
+
+
+            val pgHashWithPgSalt = queryOne<String>("SELECT crypt(?, ?)", password, pgSalt)
+            val localHashWithPgSalt = crypt(password, pgSalt)
+            assertEquals(pgHashWithPgSalt, localHashWithPgSalt)
+        }
+
+        test(type = "des")
+        test(type = "xdes")
+        test(type = "md5")
+        test(type = "bf")
     }
 
     companion object {
