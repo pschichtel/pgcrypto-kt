@@ -10,7 +10,6 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
-import java.security.SecureRandom
 import java.sql.Connection
 import kotlin.test.assertEquals
 
@@ -193,20 +192,47 @@ class PostgresTests {
 
     @Test
     fun encryptWithS2k() {
-        val clearData = "a\nb"
-        val passphrase = "password"
-        val encryptedData = pgp_sym_encrypt(clearData, passphrase, "s2k-mode=3,s2k-digest-algo=md5,s2k-cipher-algo=aes256")
+        fun test(mode: S2kMode) {
+            val id = when (mode) {
+                S2kMode.NO_SALT -> "0"
+                S2kMode.FIXED_ITERATION_COUNT -> "1"
+                S2kMode.VARIABLE_ITERATION_COUNT -> "3"
+            }
+            val clearData = "a\nb"
+            val passphrase = "password"
+            val encryptedData = pgp_sym_encrypt(clearData, passphrase, "s2k-mode=$id,s2k-digest-algo=md5,s2k-cipher-algo=aes256")
 
-        assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase))
+            assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase))
+        }
+
+        test(S2kMode.NO_SALT)
+        test(S2kMode.FIXED_ITERATION_COUNT)
+        test(S2kMode.VARIABLE_ITERATION_COUNT)
     }
 
     @Test
     fun decryptWithS2k() {
-        val clearData = "a\nb"
-        val passphrase = "password"
-        val encryptedData = queryOne<ByteArray>("SELECT pgp_sym_encrypt(?, ?, 's2k-mode=3,s2k-digest-algo=md5,s2k-cipher-algo=aes256');", clearData, passphrase)
+        fun test(mode: S2kMode) {
+            val id = when (mode) {
+                S2kMode.NO_SALT -> "0"
+                S2kMode.FIXED_ITERATION_COUNT -> "1"
+                S2kMode.VARIABLE_ITERATION_COUNT -> "3"
+            }
 
-        assertEquals(clearData, pgp_sym_decrypt(encryptedData, passphrase))
+            val clearData = "a\nb"
+            val passphrase = "password"
+            val encryptedData = queryOne<ByteArray>(
+                "SELECT pgp_sym_encrypt(?, ?, 's2k-mode=$id,s2k-digest-algo=md5,s2k-cipher-algo=aes256');",
+                clearData,
+                passphrase
+            )
+
+            assertEquals(clearData, pgp_sym_decrypt(encryptedData, passphrase))
+        }
+
+        test(S2kMode.NO_SALT)
+        test(S2kMode.FIXED_ITERATION_COUNT)
+        test(S2kMode.VARIABLE_ITERATION_COUNT)
     }
 
     @Test
