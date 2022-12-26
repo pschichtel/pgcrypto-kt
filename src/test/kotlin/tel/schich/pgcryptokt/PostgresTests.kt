@@ -11,6 +11,7 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
 import tel.schich.pgcryptokt.hashing.digest
+import tel.schich.pgcryptokt.hashing.hmac
 import tel.schich.pgcryptokt.pgp.S2kMode
 import tel.schich.pgcryptokt.pgp.armor
 import tel.schich.pgcryptokt.pgp.dearmor
@@ -418,6 +419,44 @@ class PostgresTests {
     }
 
     @Test
+    fun hmacData() {
+        val text = "secret"
+        val key = "password"
+        fun test(type: String) {
+            val pgHmac = queryOne<ByteArray>("SELECT hmac(?, ?, ?)", text, key, type)
+            val localHmac = hmac(text, key, type)
+
+            assertContentEquals(pgHmac, localHmac)
+        }
+
+        test("md5")
+        test("sha1")
+        test("sha224")
+        test("sha256")
+        test("sha384")
+        test("sha512")
+    }
+
+    @Test
+    fun hmacDataWithLongKey() {
+        val text = "secret"
+        val key = "password".repeat(1000)
+        fun test(type: String) {
+            val pgHmac = queryOne<ByteArray>("SELECT hmac(?, ?, ?)", text, key, type)
+            val localHmac = hmac(text, key, type)
+
+            assertContentEquals(pgHmac, localHmac)
+        }
+
+        test("md5")
+        test("sha1")
+        test("sha224")
+        test("sha256")
+        test("sha384")
+        test("sha512")
+    }
+
+    @Test
     fun rawEncryption() {
         val clearText = "0123456789012345"
         val key = "password12345678".toByteArray()
@@ -471,7 +510,7 @@ class PostgresTests {
         fun test(algo: String, mode: String, padding: String) {
             val type = "$algo-$mode/pad:$padding"
             val encryptedData = queryOne<ByteArray>("SELECT encrypt(?, ?, ?)", clearText.toByteArray(), key, type)
-            val decryptedData = tel.schich.pgcryptokt.raw.decrypt(encryptedData, key, type)!!
+            val decryptedData = tel.schich.pgcryptokt.raw.decrypt(encryptedData, key, type)
             assertEquals(clearText, String(decryptedData))
         }
 
@@ -495,7 +534,7 @@ class PostgresTests {
         fun test(algo: String, mode: String, padding: String) {
             val type = "$algo-$mode/pad:$padding"
             val encryptedData = queryOne<ByteArray>("SELECT encrypt_iv(?, ?, ?, ?)", clearText.toByteArray(), key, iv, type)
-            val decryptedData = decrypt_iv(encryptedData, key, iv, type)!!
+            val decryptedData = decrypt_iv(encryptedData, key, iv, type)
             assertEquals(clearText, String(decryptedData))
         }
 
