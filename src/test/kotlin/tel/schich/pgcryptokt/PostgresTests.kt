@@ -4,6 +4,7 @@ import org.bouncycastle.bcpg.ArmoredInputStream
 import org.bouncycastle.openpgp.PGPPublicKeyRingCollection
 import org.bouncycastle.openpgp.PGPSecretKeyRingCollection
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.postgresql.ds.PGSimpleDataSource
 import org.testcontainers.containers.PostgreSQLContainer
@@ -550,6 +551,7 @@ class PostgresTests {
         test(algo = "bf", mode = "ecb", padding = "none")
     }
 
+    @Disabled
     @Test
     fun cryptWithLocalSalt() {
         val password = "0123456789012345"
