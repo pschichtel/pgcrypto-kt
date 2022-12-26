@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "tel.schich"
-version = "1.0-SNAPSHOT"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -51,8 +51,6 @@ val javadocJar by tasks.creating(Jar::class) {
     archiveClassifier.set("javadoc")
     from(tasks.dokkaJavadoc)
 }
-
-fun isSnapshot() = version.toString().endsWith("-SNAPSHOT")
 
 publishing {
     publications {
