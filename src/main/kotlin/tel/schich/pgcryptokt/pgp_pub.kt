@@ -26,7 +26,8 @@ fun pgp_key_id(data: ByteArray): String {
         .mapNotNull {
             when (it) {
                 is PGPPBEEncryptedData -> "SYMKEY"
-                is PGPPublicKeyEncryptedData -> it.keyID.toULong().toString(16).padStart(16, '0')
+                is PGPPublicKeyEncryptedData ->
+                    it.keyID.toULong().toString(16).uppercase().padStart(16, '0')
                 else -> null
             }
         }

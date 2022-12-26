@@ -271,6 +271,24 @@ class PostgresTests {
         test(loadedSecretKey, loadedPublicKey, secretKeyPassphrase)
     }
 
+    @Test
+    fun keyIdOfPublicKeyEncryptedData() {
+        val encryptedData = queryOne<ByteArray>("SELECT pgp_pub_encrypt(?, ?)", "a\nb", loadedPublicKey.encoded)
+        val pgKeyId = queryOne<String>("SELECT pgp_key_id(?)", encryptedData)
+        val localKeyId = pgp_key_id(encryptedData)
+
+        assertEquals(pgKeyId, localKeyId)
+    }
+
+    @Test
+    fun keyIdOfSymmetricallyEncryptedData() {
+        val encryptedData = queryOne<ByteArray>("SELECT pgp_sym_encrypt(?, ?)", "a\nb", "password")
+        val pgKeyId = queryOne<String>("SELECT pgp_key_id(?)", encryptedData)
+        val localKeyId = pgp_key_id(encryptedData)
+
+        assertEquals(pgKeyId, localKeyId)
+    }
+
     companion object {
         const val secretKeyPassphrase = "secure!"
         val loadedSecretKey = ArmoredInputStream(PostgresTests::class.java.getResourceAsStream("/secret.key")).use {
