@@ -32,6 +32,10 @@ import java.sql.ResultSet
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
+private fun pgImageTagFromEnv(): String {
+    return System.getenv("PG_IMAGE_TAG")?.ifBlank { null } ?: "latest"
+}
+
 @Testcontainers
 class PostgresTests {
     @Test
@@ -587,7 +591,7 @@ class PostgresTests {
 
         @JvmStatic
         @Container
-        private val postgresContainer = PostgreSQLContainer(DockerImageName.parse("postgres:13.9"))
+        private val postgresContainer = PostgreSQLContainer(DockerImageName.parse("postgres:${pgImageTagFromEnv()}"))
 
         private val dataSource = lazy {
             val dataSource = PGSimpleDataSource()
@@ -652,5 +656,4 @@ class PostgresTests {
             }
         }
     }
-
 }
