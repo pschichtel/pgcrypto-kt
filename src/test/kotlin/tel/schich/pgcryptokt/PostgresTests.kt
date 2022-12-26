@@ -10,6 +10,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
+import tel.schich.pgcryptokt.hashing.digest
 import tel.schich.pgcryptokt.pgp.S2kMode
 import tel.schich.pgcryptokt.pgp.armor
 import tel.schich.pgcryptokt.pgp.dearmor
@@ -396,6 +397,24 @@ class PostgresTests {
         val localHeaders = pgp_armor_headers(armored)
 
         assertEquals(pgHeaders, localHeaders)
+    }
+
+    @Test
+    fun digestData() {
+        val text = "password"
+        fun test(type: String) {
+            val pgDigest = queryOne<ByteArray>("SELECT digest(?, ?)", text, type)
+            val localDigest = digest(text, type)
+
+            assertContentEquals(pgDigest, localDigest)
+        }
+
+        test("md5")
+        test("sha1")
+        test("sha224")
+        test("sha256")
+        test("sha384")
+        test("sha512")
     }
 
     @Test
