@@ -20,4 +20,16 @@ class DirectTests {
             pgp_sym_decrypt(encrypted, "some other password")
         }
     }
+
+    @Test
+    fun randomBytesCanBeRequested() {
+        assertEquals(MAX_RANDOM_BYTES, get_random_bytes(MAX_RANDOM_BYTES).size)
+    }
+
+    @Test
+    fun tooManyRandomBytesAreRejected() {
+        assertThrows<IllegalArgumentException> {
+            get_random_bytes(MAX_RANDOM_BYTES + 1)
+        }
+    }
 }

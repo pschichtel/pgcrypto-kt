@@ -1,0 +1,18 @@
+package tel.schich.pgcryptokt
+
+import java.util.UUID
+
+const val MAX_RANDOM_BYTES = 1024
+
+fun get_random_bytes(count: Int): ByteArray {
+    if (count > MAX_RANDOM_BYTES) {
+        throw IllegalArgumentException("A maximum of $MAX_RANDOM_BYTES can be fetched at once, but $count were requested!")
+    }
+    val output = ByteArray(count)
+    random.get().nextBytes(output)
+    return output
+}
+
+fun gen_random_uuid(): UUID {
+    return UUID.randomUUID()
+}
