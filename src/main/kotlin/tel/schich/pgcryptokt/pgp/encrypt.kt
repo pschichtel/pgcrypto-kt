@@ -7,6 +7,7 @@ import org.bouncycastle.openpgp.PGPLiteralDataGenerator
 import org.bouncycastle.openpgp.PGPPublicKeyRingCollection
 import org.bouncycastle.openpgp.operator.bc.BcPGPDataEncryptorBuilder
 import org.bouncycastle.openpgp.operator.bc.BcPublicKeyKeyEncryptionMethodGenerator
+import tel.schich.pgcryptokt.threadLocalSecureRandom
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
@@ -33,7 +34,7 @@ sealed interface EncryptionMode {
 
 fun encrypt(data: ByteArray, mode: EncryptionMode, dataType: DataType): ByteArray {
 
-    val secureRandom = random.get()
+    val secureRandom = threadLocalSecureRandom.get()
     val cipherAlgo = mode.options.cipherAlgo ?: CipherAlgo.AES128
     val encryptorBuilder = BcPGPDataEncryptorBuilder(cipherAlgo.tag)
         .setSecureRandom(secureRandom)

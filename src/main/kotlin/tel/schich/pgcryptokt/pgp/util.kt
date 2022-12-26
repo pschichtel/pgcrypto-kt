@@ -9,18 +9,12 @@ import org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator
 import org.bouncycastle.openpgp.operator.bc.BcPBEKeyEncryptionMethodGenerator
 import org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyDecryptorBuilder
 import org.bouncycastle.openpgp.operator.bc.BcPGPDigestCalculatorProvider
-import java.security.SecureRandom
-import java.util.Random
-import kotlin.math.roundToInt
-
-internal val random = ThreadLocal.withInitial { SecureRandom() }
 
 enum class DataType {
     TEXT,
     UNICODE,
     BINARY,
 }
-
 
 val fingerprintCalculator = BcKeyFingerprintCalculator()
 val digestCalculatorProvider = BcPGPDigestCalculatorProvider()

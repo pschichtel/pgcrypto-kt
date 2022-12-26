@@ -20,7 +20,6 @@ import tel.schich.pgcryptokt.pgp.pgp_pub_decrypt
 import tel.schich.pgcryptokt.pgp.pgp_pub_encrypt
 import tel.schich.pgcryptokt.pgp.pgp_sym_decrypt
 import tel.schich.pgcryptokt.pgp.pgp_sym_encrypt
-import tel.schich.pgcryptokt.pgp.random
 import tel.schich.pgcryptokt.raw.decrypt_iv
 import tel.schich.pgcryptokt.raw.encrypt_iv
 import java.sql.Connection
@@ -426,7 +425,7 @@ class PostgresTests {
         val clearText = "0123456789012345"
         val key = "password12345678".toByteArray()
         val iv = ByteArray(16)
-        random.get().nextBytes(iv)
+        threadLocalSecureRandom.get().nextBytes(iv)
 
         fun test(algo: String, mode: String, padding: String) {
             val type = "$algo-$mode/pad:$padding"
@@ -453,7 +452,7 @@ class PostgresTests {
         fun test(algo: String, mode: String, padding: String) {
             val type = "$algo-$mode/pad:$padding"
             val encryptedData = queryOne<ByteArray>("SELECT encrypt(?, ?, ?)", clearText.toByteArray(), key, type)
-            val decryptedData = tel.schich.pgcryptokt.raw.decrypt(encryptedData, key, type)
+            val decryptedData = tel.schich.pgcryptokt.raw.decrypt(encryptedData, key, type)!!
             assertEquals(clearText, String(decryptedData))
         }
 
@@ -472,12 +471,12 @@ class PostgresTests {
         val clearText = "0123456789012345"
         val key = "password12345678".toByteArray()
         val iv = ByteArray(16)
-        random.get().nextBytes(iv)
+        threadLocalSecureRandom.get().nextBytes(iv)
 
         fun test(algo: String, mode: String, padding: String) {
             val type = "$algo-$mode/pad:$padding"
             val encryptedData = queryOne<ByteArray>("SELECT encrypt_iv(?, ?, ?, ?)", clearText.toByteArray(), key, iv, type)
-            val decryptedData = decrypt_iv(encryptedData, key, iv, type)
+            val decryptedData = decrypt_iv(encryptedData, key, iv, type)!!
             assertEquals(clearText, String(decryptedData))
         }
 

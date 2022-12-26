@@ -30,7 +30,7 @@ class DirectTests {
 
     @Test
     fun randomBytesCanBeRequested() {
-        assertEquals(MAX_RANDOM_BYTES, get_random_bytes(MAX_RANDOM_BYTES).size)
+        assertEquals(MAX_RANDOM_BYTES, get_random_bytes(MAX_RANDOM_BYTES)!!.size)
     }
 
     @Test
@@ -47,7 +47,7 @@ class DirectTests {
 
         fun test(algo: String, mode: String, padding: String) {
             val type = "$algo-$mode/pad:$padding"
-            assertEquals(clearText, String(decrypt(encrypt(clearText.toByteArray(), key, type), key, type)))
+            assertEquals(clearText, String(decrypt(encrypt(clearText.toByteArray(), key, type), key, type)!!))
         }
 
         test(algo = "aes", mode = "cbc", padding = "pkcs")
