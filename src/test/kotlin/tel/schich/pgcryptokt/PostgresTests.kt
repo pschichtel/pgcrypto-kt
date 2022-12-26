@@ -246,6 +246,24 @@ class PostgresTests {
     }
 
     @Test
+    fun encryptWithUnicodeMode() {
+        val clearData = "a\nb"
+        val passphrase = "password"
+        val encryptedData = pgp_sym_encrypt(clearData, passphrase, "unicode-mode=1")
+
+        assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase))
+    }
+
+    @Test
+    fun decryptWithUnicodeMode() {
+        val clearData = "a\nb"
+        val passphrase = "password"
+        val encryptedData = queryOne<ByteArray>("SELECT pgp_sym_encrypt(?, ?, 'unicode-mode=1');", clearData, passphrase)
+
+        assertEquals(clearData, pgp_sym_decrypt(encryptedData, passphrase))
+    }
+
+    @Test
     fun encryptWithPublicKey() {
         fun test(secret: PGPSecretKeyRingCollection, public: PGPPublicKeyRingCollection, passphrase: String) {
             val clearData = "a\nb"
