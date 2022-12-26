@@ -20,7 +20,7 @@ class PostgresTests {
         val clearData = "a".repeat(70000)
         val passphrase = "password"
         val encryptedData = queryOne<ByteArray>("SELECT pgp_sym_encrypt(?, ?);", clearData, passphrase)
-        val dbDecryptedData = queryOne<String>("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase)
+        val dbDecryptedData = queryOne<String>("SELECT pgp_sym_decrypt(?, ?);", encryptedData, passphrase)
         val localDecryptedData = pgp_sym_decrypt(encryptedData, passphrase)
 
         assertEquals(dbDecryptedData, localDecryptedData)
@@ -56,7 +56,7 @@ class PostgresTests {
         val clearData = "a".repeat(70000)
         val passphrase = "password"
         val encryptedData = pgp_sym_encrypt(clearData, passphrase)
-        val decryptedData = queryOne<String>("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase)
+        val decryptedData = queryOne<String>("SELECT pgp_sym_decrypt(?, ?);", encryptedData, passphrase)
 
         assertEquals(clearData, decryptedData)
     }
@@ -67,8 +67,8 @@ class PostgresTests {
         val passphrase = "password"
         val encryptedData = pgp_sym_encrypt(clearData, passphrase, "convert-crlf=1")
 
-        assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?, 'convert-crlf=1');", encryptedData, passphrase))
-        assertEquals("a\r\nb", queryOne("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?, 'convert-crlf=0');", encryptedData, passphrase))
+        assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(?, ?, 'convert-crlf=1');", encryptedData, passphrase))
+        assertEquals("a\r\nb", queryOne("SELECT pgp_sym_decrypt(?, ?, 'convert-crlf=0');", encryptedData, passphrase))
     }
 
     @Test
@@ -87,7 +87,7 @@ class PostgresTests {
         val passphrase = "password"
         val encryptedData = pgp_sym_encrypt(clearData, passphrase, "cipher-algo=aes256")
 
-        assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase))
+        assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(?, ?);", encryptedData, passphrase))
     }
 
     @Test
@@ -105,7 +105,7 @@ class PostgresTests {
         val passphrase = "password"
         val encryptedData = pgp_sym_encrypt(clearData, passphrase, "sess-key=1")
 
-        assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase))
+        assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(?, ?);", encryptedData, passphrase))
     }
 
     @Test
@@ -126,7 +126,7 @@ class PostgresTests {
         assertEquals(
             clearData,
             queryOne(
-                "SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);",
+                "SELECT pgp_sym_decrypt(?, ?);",
                 pgp_sym_encrypt(clearData, passphrase, "compress-algo=0,compress-level=9"),
                 passphrase
             )
@@ -135,7 +135,7 @@ class PostgresTests {
         assertEquals(
             clearData,
             queryOne(
-                "SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);",
+                "SELECT pgp_sym_decrypt(?, ?);",
                 pgp_sym_encrypt(clearData, passphrase, "compress-algo=1,compress-level=9"),
                 passphrase
             )
@@ -144,7 +144,7 @@ class PostgresTests {
         assertEquals(
             clearData,
             queryOne(
-                "SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);",
+                "SELECT pgp_sym_decrypt(?, ?);",
                 pgp_sym_encrypt(clearData, passphrase, "compress-algo=2,compress-level=9"),
                 passphrase
             )
@@ -202,7 +202,7 @@ class PostgresTests {
             val passphrase = "password"
             val encryptedData = pgp_sym_encrypt(clearData, passphrase, "s2k-mode=$id,s2k-digest-algo=md5,s2k-cipher-algo=aes256")
 
-            assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase))
+            assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(?, ?);", encryptedData, passphrase))
         }
 
         test(S2kMode.NO_SALT)
@@ -243,7 +243,7 @@ class PostgresTests {
         fun testAlgo(algo: String) {
             val encryptedData = pgp_sym_encrypt(clearData, passphrase, "sess-key=1,s2k-cipher-algo=$algo")
 
-            assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase))
+            assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(?, ?);", encryptedData, passphrase))
         }
 
         testAlgo("bf")
@@ -277,7 +277,7 @@ class PostgresTests {
         val passphrase = "password"
         val encryptedData = pgp_sym_encrypt(clearData, passphrase, "unicode-mode=1")
 
-        assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(CAST(? AS BYTEA), ?);", encryptedData, passphrase))
+        assertEquals(clearData, queryOne("SELECT pgp_sym_decrypt(?, ?);", encryptedData, passphrase))
     }
 
     @Test
