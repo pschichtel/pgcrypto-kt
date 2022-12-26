@@ -11,6 +11,8 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
 import java.sql.Connection
+import java.sql.ResultSet
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 @Testcontainers
@@ -333,6 +335,57 @@ class PostgresTests {
         assertEquals(pgKeyId, localKeyId)
     }
 
+    @Test
+    fun armoring() {
+        val pgArmoredKey = queryOne<String>("SELECT armor(?)", loadedSecretKey.encoded)
+        val localArmoredKey = armor(loadedSecretKey.encoded)
+
+        assertEquals(pgArmoredKey, localArmoredKey)
+    }
+
+    @Test
+    fun armoringWithHeaders() {
+        val keys = arrayOf("a", "a", "b")
+        val values = arrayOf("1", "2", "3")
+        val pgArmoredKey = queryOne<String>("SELECT armor(?, ?, ?)", loadedSecretKey.encoded, keys, values)
+        val localArmoredKey = armor(loadedSecretKey.encoded, keys, values)
+
+        assertEquals(pgArmoredKey, localArmoredKey)
+    }
+
+    @Test
+    fun dearmoring() {
+        val armored = queryOne<String>("SELECT armor(?)", loadedSecretKey.encoded)
+        val pgArmoredKey = queryOne<ByteArray>("SELECT dearmor(?)", armored)
+        val localArmoredKey = dearmor(armored)
+
+        assertContentEquals(pgArmoredKey, localArmoredKey)
+    }
+
+    @Test
+    fun dearmoringWithHeaders() {
+        val keys = arrayOf("a", "a", "b")
+        val values = arrayOf("1", "2", "3")
+        val armored = queryOne<String>("SELECT armor(?, ?, ?)", loadedSecretKey.encoded, keys, values)
+        val pgArmoredKey = queryOne<ByteArray>("SELECT dearmor(?)", armored)
+        val localArmoredKey = dearmor(armored)
+
+        assertContentEquals(pgArmoredKey, localArmoredKey)
+    }
+
+    @Test
+    fun armorHeaders() {
+        val keys = arrayOf("a", "a", "b")
+        val values = arrayOf("1", "2", "3")
+        val armored = queryOne<String>("SELECT armor(?, ?, ?)", loadedSecretKey.encoded, keys, values)
+        val pgHeaders = queryAll("SELECT * FROM pgp_armor_headers(?)", listOf(armored)) {
+            Pair(it.getString(1), it.getString(2))
+        }
+        val localHeaders = pgp_armor_headers(armored)
+
+        assertEquals(pgHeaders, localHeaders)
+    }
+
     companion object {
         const val secretKeyPassphrase = "secure!"
         val loadedSecretKey = ArmoredInputStream(PostgresTests::class.java.getResourceAsStream("/secret.key")).use {
@@ -389,6 +442,22 @@ class PostgresTests {
                         Int::class -> result.getInt(1)
                         else -> result.getObject(1)
                     } as T
+                }
+            }
+        }
+
+        private inline fun <reified T : Any> queryAll(@Language("SQL") sql: String, args: Iterable<Any?>, parse: (ResultSet) -> T): List<T> {
+            return buildList {
+                withConnection {
+                    prepareStatement(sql).use {
+                        for ((i, arg) in args.withIndex()) {
+                            it.setObject(i + 1, arg)
+                        }
+                        val result = it.executeQuery()
+                        while (result.next()) {
+                            add(parse(result))
+                        }
+                    }
                 }
             }
         }
