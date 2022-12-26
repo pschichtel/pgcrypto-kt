@@ -32,4 +32,24 @@ class DirectTests {
             get_random_bytes(MAX_RANDOM_BYTES + 1)
         }
     }
+
+    @Test
+    fun rawEncryptionRoundTrip() {
+        val clearText = "0123456789012345"
+        val key = "password12345678".toByteArray()
+
+        fun test(algo: String, mode: String, padding: String) {
+            val type = "$algo-$mode/pad:$padding"
+            assertEquals(clearText, String(decrypt(encrypt(clearText.toByteArray(), key, type), key, type)))
+        }
+
+        test(algo = "aes", mode = "cbc", padding = "pkcs")
+        test(algo = "aes", mode = "cbc", padding = "none")
+        test(algo = "aes", mode = "ecb", padding = "pkcs")
+        test(algo = "aes", mode = "ecb", padding = "none")
+        test(algo = "bf", mode = "cbc", padding = "pkcs")
+        test(algo = "bf", mode = "cbc", padding = "none")
+        test(algo = "bf", mode = "ecb", padding = "pkcs")
+        test(algo = "bf", mode = "ecb", padding = "none")
+    }
 }

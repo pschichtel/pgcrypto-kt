@@ -386,6 +386,98 @@ class PostgresTests {
         assertEquals(pgHeaders, localHeaders)
     }
 
+    @Test
+    fun rawEncryption() {
+        val clearText = "0123456789012345"
+        val key = "password12345678".toByteArray()
+
+        fun test(algo: String, mode: String, padding: String) {
+            val type = "$algo-$mode/pad:$padding"
+            val encryptedData = encrypt(clearText.toByteArray(), key, type)
+            val decryptedData = queryOne<ByteArray>("SELECT decrypt(?, ?, ?)", encryptedData, key, type)
+            assertEquals(clearText, String(decryptedData))
+        }
+
+        test(algo = "aes", mode = "cbc", padding = "pkcs")
+        test(algo = "aes", mode = "cbc", padding = "none")
+        test(algo = "aes", mode = "ecb", padding = "pkcs")
+        test(algo = "aes", mode = "ecb", padding = "none")
+        test(algo = "bf", mode = "cbc", padding = "pkcs")
+        test(algo = "bf", mode = "cbc", padding = "none")
+        test(algo = "bf", mode = "ecb", padding = "pkcs")
+        test(algo = "bf", mode = "ecb", padding = "none")
+    }
+
+    @Test
+    fun rawEncryptionWithIv() {
+        val clearText = "0123456789012345"
+        val key = "password12345678".toByteArray()
+        val iv = ByteArray(16)
+        random.get().nextBytes(iv)
+
+        fun test(algo: String, mode: String, padding: String) {
+            val type = "$algo-$mode/pad:$padding"
+            val encryptedData = encrypt_iv(clearText.toByteArray(), key, iv, type)
+            val decryptedData = queryOne<ByteArray>("SELECT decrypt_iv(?, ?, ?, ?)", encryptedData, key, iv, type)
+            assertEquals(clearText, String(decryptedData))
+        }
+
+        test(algo = "aes", mode = "cbc", padding = "pkcs")
+        test(algo = "aes", mode = "cbc", padding = "none")
+        test(algo = "aes", mode = "ecb", padding = "pkcs")
+        test(algo = "aes", mode = "ecb", padding = "none")
+        test(algo = "bf", mode = "cbc", padding = "pkcs")
+        test(algo = "bf", mode = "cbc", padding = "none")
+        test(algo = "bf", mode = "ecb", padding = "pkcs")
+        test(algo = "bf", mode = "ecb", padding = "none")
+    }
+
+    @Test
+    fun rawDecryption() {
+        val clearText = "0123456789012345"
+        val key = "password12345678".toByteArray()
+
+        fun test(algo: String, mode: String, padding: String) {
+            val type = "$algo-$mode/pad:$padding"
+            val encryptedData = queryOne<ByteArray>("SELECT encrypt(?, ?, ?)", clearText.toByteArray(), key, type)
+            val decryptedData = decrypt(encryptedData, key, type)
+            assertEquals(clearText, String(decryptedData))
+        }
+
+        test(algo = "aes", mode = "cbc", padding = "pkcs")
+        test(algo = "aes", mode = "cbc", padding = "none")
+        test(algo = "aes", mode = "ecb", padding = "pkcs")
+        test(algo = "aes", mode = "ecb", padding = "none")
+        test(algo = "bf", mode = "cbc", padding = "pkcs")
+        test(algo = "bf", mode = "cbc", padding = "none")
+        test(algo = "bf", mode = "ecb", padding = "pkcs")
+        test(algo = "bf", mode = "ecb", padding = "none")
+    }
+
+    @Test
+    fun rawDecryptionWithIv() {
+        val clearText = "0123456789012345"
+        val key = "password12345678".toByteArray()
+        val iv = ByteArray(16)
+        random.get().nextBytes(iv)
+
+        fun test(algo: String, mode: String, padding: String) {
+            val type = "$algo-$mode/pad:$padding"
+            val encryptedData = queryOne<ByteArray>("SELECT encrypt_iv(?, ?, ?, ?)", clearText.toByteArray(), key, iv, type)
+            val decryptedData = decrypt_iv(encryptedData, key, iv, type)
+            assertEquals(clearText, String(decryptedData))
+        }
+
+        test(algo = "aes", mode = "cbc", padding = "pkcs")
+        test(algo = "aes", mode = "cbc", padding = "none")
+        test(algo = "aes", mode = "ecb", padding = "pkcs")
+        test(algo = "aes", mode = "ecb", padding = "none")
+        test(algo = "bf", mode = "cbc", padding = "pkcs")
+        test(algo = "bf", mode = "cbc", padding = "none")
+        test(algo = "bf", mode = "ecb", padding = "pkcs")
+        test(algo = "bf", mode = "ecb", padding = "none")
+    }
+
     companion object {
         const val secretKeyPassphrase = "secure!"
         val loadedSecretKey = ArmoredInputStream(PostgresTests::class.java.getResourceAsStream("/secret.key")).use {
