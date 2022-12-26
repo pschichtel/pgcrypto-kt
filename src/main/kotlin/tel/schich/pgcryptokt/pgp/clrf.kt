@@ -1,4 +1,4 @@
-package tel.schich.pgcryptokt
+package tel.schich.pgcryptokt.pgp
 
 import java.io.InputStream
 import java.io.OutputStream

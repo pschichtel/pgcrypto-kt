@@ -1,6 +1,8 @@
 package tel.schich.pgcryptokt
 
 import org.junit.jupiter.api.Test
+import tel.schich.pgcryptokt.pgp.CrLfToLfInputStream
+import tel.schich.pgcryptokt.pgp.LfToCrlfOutputStream
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import kotlin.test.assertContentEquals

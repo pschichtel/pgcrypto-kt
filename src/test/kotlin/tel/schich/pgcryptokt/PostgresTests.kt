@@ -10,6 +10,19 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
+import tel.schich.pgcryptokt.pgp.S2kMode
+import tel.schich.pgcryptokt.pgp.armor
+import tel.schich.pgcryptokt.pgp.dearmor
+import tel.schich.pgcryptokt.pgp.fingerprintCalculator
+import tel.schich.pgcryptokt.pgp.pgp_armor_headers
+import tel.schich.pgcryptokt.pgp.pgp_key_id
+import tel.schich.pgcryptokt.pgp.pgp_pub_decrypt
+import tel.schich.pgcryptokt.pgp.pgp_pub_encrypt
+import tel.schich.pgcryptokt.pgp.pgp_sym_decrypt
+import tel.schich.pgcryptokt.pgp.pgp_sym_encrypt
+import tel.schich.pgcryptokt.pgp.random
+import tel.schich.pgcryptokt.raw.decrypt_iv
+import tel.schich.pgcryptokt.raw.encrypt_iv
 import java.sql.Connection
 import java.sql.ResultSet
 import kotlin.test.assertContentEquals
@@ -393,7 +406,7 @@ class PostgresTests {
 
         fun test(algo: String, mode: String, padding: String) {
             val type = "$algo-$mode/pad:$padding"
-            val encryptedData = encrypt(clearText.toByteArray(), key, type)
+            val encryptedData = tel.schich.pgcryptokt.raw.encrypt(clearText.toByteArray(), key, type)
             val decryptedData = queryOne<ByteArray>("SELECT decrypt(?, ?, ?)", encryptedData, key, type)
             assertEquals(clearText, String(decryptedData))
         }
@@ -440,7 +453,7 @@ class PostgresTests {
         fun test(algo: String, mode: String, padding: String) {
             val type = "$algo-$mode/pad:$padding"
             val encryptedData = queryOne<ByteArray>("SELECT encrypt(?, ?, ?)", clearText.toByteArray(), key, type)
-            val decryptedData = decrypt(encryptedData, key, type)
+            val decryptedData = tel.schich.pgcryptokt.raw.decrypt(encryptedData, key, type)
             assertEquals(clearText, String(decryptedData))
         }
 

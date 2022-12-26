@@ -1,4 +1,4 @@
-package tel.schich.pgcryptokt
+package tel.schich.pgcryptokt.pgp
 
 import org.bouncycastle.bcpg.ArmoredInputStream
 import java.io.ByteArrayInputStream

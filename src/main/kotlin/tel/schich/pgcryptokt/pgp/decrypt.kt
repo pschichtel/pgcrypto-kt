@@ -1,4 +1,4 @@
-package tel.schich.pgcryptokt
+package tel.schich.pgcryptokt.pgp
 
 import org.bouncycastle.apache.bzip2.CBZip2InputStream
 import org.bouncycastle.bcpg.BCPGInputStream
@@ -23,7 +23,8 @@ class InvalidDataOrPassphraseException(cause: Throwable?) : RuntimeException(cau
 
 sealed interface DecryptionMode {
     val options: DecryptionOptions
-    class PrivateKey(val key: ByteArray, val password: CharArray, override val options: AsymmetricDecryptionOptions) : DecryptionMode
+    class PrivateKey(val key: ByteArray, val password: CharArray, override val options: AsymmetricDecryptionOptions) :
+        DecryptionMode
     class Password(val password: CharArray, override val options: SymmetricDecryptionOptions) : DecryptionMode
 }
 

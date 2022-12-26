@@ -1,4 +1,4 @@
-package tel.schich.pgcryptokt
+package tel.schich.pgcryptokt.raw
 
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec

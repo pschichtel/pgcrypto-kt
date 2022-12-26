@@ -1,4 +1,4 @@
-package tel.schich.pgcryptokt
+package tel.schich.pgcryptokt.pgp
 
 import org.bouncycastle.openpgp.PGPCompressedDataGenerator
 import org.bouncycastle.openpgp.PGPEncryptedDataGenerator
@@ -12,6 +12,16 @@ import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.lang.IllegalArgumentException
 import java.util.Date
+import java.util.Random
+import kotlin.math.roundToInt
+
+private fun remap(value: Int, from: IntRange, to: IntRange): Int {
+    return to.first + (value / (from.last - from.first).toDouble() * (to.last - to.first)).roundToInt()
+}
+
+private fun randomIn(random: Random, range: IntRange): Int {
+    return range.first + (random.nextDouble() * (range.last - range.first)).roundToInt()
+}
 
 private fun digestCalculator(algo: S2kDigestAlgo) = digestCalculatorProvider.get(algo.tag)
 
