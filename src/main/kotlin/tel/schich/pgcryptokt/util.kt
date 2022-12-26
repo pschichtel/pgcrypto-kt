@@ -2,23 +2,16 @@ package tel.schich.pgcryptokt
 
 import org.bouncycastle.bcpg.BCPGOutputStream
 import org.bouncycastle.bcpg.ContainedPacket
-import org.bouncycastle.bcpg.HashAlgorithmTags
-import org.bouncycastle.crypto.KeyGenerationParameters
-import org.bouncycastle.crypto.generators.RSAKeyPairGenerator
-import org.bouncycastle.openpgp.PGPEncryptedData
 import org.bouncycastle.openpgp.PGPObjectFactory
-import org.bouncycastle.openpgp.PGPPublicKey
-import org.bouncycastle.openpgp.PGPSecretKey
-import org.bouncycastle.openpgp.PGPSignature
+import org.bouncycastle.openpgp.PGPPublicKeyRingCollection
+import org.bouncycastle.openpgp.PGPSecretKeyRingCollection
 import org.bouncycastle.openpgp.operator.PGPDigestCalculator
 import org.bouncycastle.openpgp.operator.PGPKeyEncryptionMethodGenerator
+import org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator
 import org.bouncycastle.openpgp.operator.bc.BcPBEKeyEncryptionMethodGenerator
-import org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyEncryptorBuilder
-import org.bouncycastle.openpgp.operator.bc.BcPGPContentSignerBuilder
+import org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyDecryptorBuilder
 import org.bouncycastle.openpgp.operator.bc.BcPGPDigestCalculatorProvider
-import org.bouncycastle.openpgp.operator.bc.BcPGPKeyPair
-import java.security.SecureRandom
-import java.util.Date
+import java.io.InputStream
 import java.util.Random
 import kotlin.math.roundToInt
 
@@ -36,7 +29,10 @@ enum class DataType {
     BINARY,
 }
 
+
+val fingerprintCalculator = BcKeyFingerprintCalculator()
 val digestCalculatorProvider = BcPGPDigestCalculatorProvider()
+val secretKeyDecryptorBuilder = BcPBESecretKeyDecryptorBuilder(digestCalculatorProvider)
 
 fun PGPObjectFactory.asSequence() = sequence {
     var obj: Any? = this@asSequence.nextObject()
@@ -79,24 +75,4 @@ internal class CustomSessKeyAlgoBcPBEKeyEncryptionMethodGenerator : BcPBEKeyEncr
     override fun generate(encAlgorithm: Int, sessionInfo: ByteArray?): ContainedPacket {
         return super.generate(overrideSessionKeyCipherAlgo, sessionInfo)
     }
-}
-
-fun generateSecretKey(identity: String, passPhrase: String, strength: Int, random: SecureRandom): PGPSecretKey {
-    val keyPairGenerator = RSAKeyPairGenerator()
-    keyPairGenerator.init(KeyGenerationParameters(random, strength))
-    val rsaKeyPair = keyPairGenerator.generateKeyPair()
-    val pgpKeyPair = BcPGPKeyPair(PGPPublicKey.RSA_GENERAL, rsaKeyPair, Date())
-
-    val sha1Calc = digestCalculatorProvider.get(HashAlgorithmTags.SHA1)
-
-    return PGPSecretKey(
-        PGPSignature.DEFAULT_CERTIFICATION,
-        pgpKeyPair,
-        identity,
-        sha1Calc,
-        null,
-        null,
-        BcPGPContentSignerBuilder(pgpKeyPair.publicKey.algorithm, HashAlgorithmTags.SHA256),
-        BcPBESecretKeyEncryptorBuilder(PGPEncryptedData.CAST5, sha1Calc).build(passPhrase.toCharArray()),
-    )
 }

@@ -4,13 +4,13 @@ import org.bouncycastle.openpgp.PGPCompressedDataGenerator
 import org.bouncycastle.openpgp.PGPEncryptedDataGenerator
 import org.bouncycastle.openpgp.PGPLiteralData
 import org.bouncycastle.openpgp.PGPLiteralDataGenerator
-import org.bouncycastle.openpgp.PGPUtil
-import org.bouncycastle.openpgp.bc.BcPGPPublicKeyRingCollection
+import org.bouncycastle.openpgp.PGPPublicKeyRingCollection
 import org.bouncycastle.openpgp.operator.bc.BcPGPDataEncryptorBuilder
 import org.bouncycastle.openpgp.operator.bc.BcPublicKeyKeyEncryptionMethodGenerator
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
+import java.lang.IllegalArgumentException
 import java.security.SecureRandom
 import java.util.Date
 
@@ -33,17 +33,21 @@ fun encrypt(data: ByteArray, mode: EncryptionMode, dataType: DataType): ByteArra
 
     val encryptionMethodGenerator = when (mode) {
         is EncryptionMode.PublicKey -> {
-            val stream = PGPUtil.getDecoderStream(ByteArrayInputStream(mode.key))
-            val keyRingCollection = BcPGPPublicKeyRingCollection(stream)
-            stream.close()
-            val publicKey = keyRingCollection
+            val keys = PGPPublicKeyRingCollection(ByteArrayInputStream(mode.key), fingerprintCalculator)
                 .keyRings
                 .asSequence()
                 .flatMap { it.publicKeys.asSequence() }
-                .filter { it.isEncryptionKey }
-                .firstOrNull()
-                ?: error("The given keyring did not contain a public key!")
-            listOf(BcPublicKeyKeyEncryptionMethodGenerator(publicKey))
+                .filter { it.isEncryptionKey && !it.isMasterKey }
+                .toList()
+
+            if (keys.isEmpty()) {
+                throw IllegalArgumentException("No public keys detected in key!")
+            }
+            if (keys.size > 1) {
+                throw IllegalArgumentException("Multiple public keys detected in key!")
+            }
+
+            listOf(BcPublicKeyKeyEncryptionMethodGenerator(keys.first()))
         }
         is EncryptionMode.Password -> {
             val sessKeyEncryptionAlgo =

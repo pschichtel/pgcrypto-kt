@@ -10,11 +10,8 @@ import org.bouncycastle.openpgp.PGPEncryptedDataList
 import org.bouncycastle.openpgp.PGPObjectFactory
 import org.bouncycastle.openpgp.PGPPBEEncryptedData
 import org.bouncycastle.openpgp.PGPPublicKeyEncryptedData
-import org.bouncycastle.openpgp.PGPUtil
-import org.bouncycastle.openpgp.bc.BcPGPSecretKeyRingCollection
-import org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator
+import org.bouncycastle.openpgp.PGPSecretKeyRingCollection
 import org.bouncycastle.openpgp.operator.bc.BcPBEDataDecryptorFactory
-import org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyDecryptorBuilder
 import org.bouncycastle.openpgp.operator.bc.BcPublicKeyDataDecryptorFactory
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -30,8 +27,6 @@ sealed interface DecryptionMode {
     class Password(val password: CharArray, override val options: SymmetricDecryptionOptions) : DecryptionMode
 }
 
-private val fingerprintCalculator = BcKeyFingerprintCalculator()
-
 fun encryptedDataFrom(data: ByteArray): Sequence<PGPEncryptedData> {
     return PGPObjectFactory(data, fingerprintCalculator)
         .asSequence()
@@ -45,18 +40,13 @@ fun encryptedDataFrom(data: ByteArray): Sequence<PGPEncryptedData> {
 fun decrypt(data: ByteArray, mode: DecryptionMode, textMode: Boolean): ByteArray {
     val output = ByteArrayOutputStream()
     val literalData = try {
-        val encryptedData = encryptedDataFrom(data).toList()
+        val encryptedData = encryptedDataFrom(data)
         val decryptedData = when (mode) {
             is DecryptionMode.PrivateKey -> {
-                val secretKeyDecryptor =
-                    BcPBESecretKeyDecryptorBuilder(digestCalculatorProvider).build(mode.password)
-
-                val stream = PGPUtil.getDecoderStream(ByteArrayInputStream(mode.key))
-                val keyRingCollection = BcPGPSecretKeyRingCollection(stream)
-                stream.close()
-                val secretKeyLookup = keyRingCollection
+                val secretKeyLookup = PGPSecretKeyRingCollection(ByteArrayInputStream(mode.key), fingerprintCalculator)
                     .asSequence()
                     .flatMap { it.secretKeys.asSequence() }
+                    .filter { !it.isMasterKey }
                     .associateBy { it.publicKey.keyID }
 
                 encryptedData
@@ -65,6 +55,7 @@ fun decrypt(data: ByteArray, mode: DecryptionMode, textMode: Boolean): ByteArray
                         val secretKey = secretKeyLookup[it.keyID]
                             ?: error("Wrong secret key way given!")
 
+                        val secretKeyDecryptor = secretKeyDecryptorBuilder.build(mode.password)
                         val decryptorFactory = BcPublicKeyDataDecryptorFactory(secretKey.extractPrivateKey(secretKeyDecryptor))
 
                         BCPGInputStream(it.getDataStream(decryptorFactory))

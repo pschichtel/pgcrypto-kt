@@ -1,5 +1,8 @@
 package tel.schich.pgcryptokt
 
+import org.bouncycastle.bcpg.ArmoredInputStream
+import org.bouncycastle.openpgp.PGPPublicKeyRingCollection
+import org.bouncycastle.openpgp.PGPSecretKeyRingCollection
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
 import org.postgresql.ds.PGSimpleDataSource
@@ -7,6 +10,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
+import java.security.SecureRandom
 import java.sql.Connection
 import kotlin.test.assertEquals
 
@@ -241,7 +245,41 @@ class PostgresTests {
         testAlgo("aes256")
     }
 
+    @Test
+    fun encryptWithPublicKey() {
+        fun test(secret: PGPSecretKeyRingCollection, public: PGPPublicKeyRingCollection, passphrase: String) {
+            val clearData = "a\nb"
+            val encryptedData = pgp_pub_encrypt(clearData, public.encoded)
+            val decryptedData = queryOne<String>("SELECT pgp_pub_decrypt(?, ?, ?)", encryptedData, secret.encoded, passphrase)
+
+            assertEquals(clearData, decryptedData)
+        }
+
+        test(loadedSecretKey, loadedPublicKey, secretKeyPassphrase)
+    }
+
+    @Test
+    fun decryptWithSecretKey() {
+        fun test(secret: PGPSecretKeyRingCollection, public: PGPPublicKeyRingCollection, passphrase: String) {
+            val clearData = "a\nb"
+            val encryptedData = queryOne<ByteArray>("SELECT pgp_pub_encrypt(?, ?)", clearData, public.encoded)
+            val decryptedData = pgp_pub_decrypt(encryptedData, secret.encoded, passphrase)
+
+            assertEquals(clearData, decryptedData)
+        }
+
+        test(loadedSecretKey, loadedPublicKey, secretKeyPassphrase)
+    }
+
     companion object {
+        const val secretKeyPassphrase = "secure!"
+        val loadedSecretKey = ArmoredInputStream(PostgresTests::class.java.getResourceAsStream("/secret.key")).use {
+            PGPSecretKeyRingCollection(it, fingerprintCalculator)
+        }
+        val loadedPublicKey = ArmoredInputStream(PostgresTests::class.java.getResourceAsStream("/public.key")).use {
+            PGPPublicKeyRingCollection(it, fingerprintCalculator)
+        }
+
         @JvmStatic
         @Container
         private val postgresContainer = PostgreSQLContainer(DockerImageName.parse("postgres:13.9"))
