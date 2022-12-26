@@ -75,11 +75,7 @@ data class SymmetricEncryptionOptions(
     val s2kDigestAlgo: S2kDigestAlgo? = null,
     val s2kCipherAlgo: S2kCipherAlgo? = null,
     override val unicodeMode: Boolean? = null,
-) : EncryptionOptions {
-    companion object {
-        val Empty = SymmetricEncryptionOptions()
-    }
-}
+) : EncryptionOptions
 
 data class AsymmetricEncryptionOptions(
     override val cipherAlgo: CipherAlgo? = null,
@@ -88,29 +84,17 @@ data class AsymmetricEncryptionOptions(
     override val convertCrLf: Boolean? = null,
     override val disableMdc: Boolean? = null,
     override val unicodeMode: Boolean? = null,
-) : EncryptionOptions {
-    companion object {
-        val Empty = AsymmetricEncryptionOptions()
-    }
-}
+) : EncryptionOptions
 
 sealed interface DecryptionOptions : Options
 
 data class SymmetricDecryptionOptions(
     override val convertCrLf: Boolean? = null,
-) : DecryptionOptions {
-    companion object {
-        val Empty = SymmetricDecryptionOptions()
-    }
-}
+) : DecryptionOptions
 
 data class AsymmetricDecryptionOptions(
     override val convertCrLf: Boolean? = null,
-) : DecryptionOptions {
-    companion object {
-        val Empty = AsymmetricDecryptionOptions()
-    }
-}
+) : DecryptionOptions
 
 private val optionSeparator = """\s*,\s*""".toRegex()
 
