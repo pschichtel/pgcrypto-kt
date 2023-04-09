@@ -18,13 +18,13 @@ repositories {
 }
 
 dependencies {
-    implementation(platform("org.testcontainers:testcontainers-bom:1.17.6"))
+    implementation(platform("org.testcontainers:testcontainers-bom:1.18.0"))
     implementation("org.bouncycastle:bcpg-jdk18on:1.72.2")
     testImplementation(kotlin("test"))
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
-    testImplementation("org.postgresql:postgresql:42.5.1")
-    testImplementation("org.slf4j:slf4j-simple:2.0.6")
+    testImplementation("org.postgresql:postgresql:42.6.0")
+    testImplementation("org.slf4j:slf4j-simple:2.0.7")
 }
 
 tasks.test {
