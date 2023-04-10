@@ -573,7 +573,7 @@ class PostgresTests {
             assertEquals(pgHashWithPgSalt, localHashWithPgSalt)
         }
 
-//        test(type = "des")
+        test(type = "des")
 //        test(type = "xdes")
         test(type = "md5")
         test(type = "bf")

@@ -3,6 +3,7 @@ package tel.schich.pgcryptokt.hashing
 import at.favre.lib.crypto.bcrypt.BCrypt
 import at.favre.lib.crypto.bcrypt.LongPasswordStrategies.truncate
 import org.apache.commons.codec.digest.Md5Crypt
+import org.apache.commons.codec.digest.UnixCrypt
 import tel.schich.pgcryptokt.base64ToBytes
 import tel.schich.pgcryptokt.bytesToBase64
 import tel.schich.pgcryptokt.calculateBase64Size
@@ -41,11 +42,8 @@ sealed interface CryptAlgorithm {
             return salt.toString()
         }
 
-        fun crypt(password: String, saltChars: CharArray): String {
-            val salt = (base64Alphabet.indexOf(saltChars[0]) shl 6) or base64Alphabet.indexOf(saltChars[1])
-            val passwordBytes = password.toByteArray(Charsets.UTF_8)
-
-            return des(passwordBytes, salt, count = 25)
+        fun crypt(password: String, salt: String): String {
+            return UnixCrypt.crypt(password, salt)
         }
     }
     object XDES : CryptAlgorithm {
@@ -153,6 +151,6 @@ fun crypt(password: String, salt: String): String {
         salt.startsWith("$2$") -> throw IllegalArgumentException("Illegal salt given: $salt")
         salt.startsWith(CryptAlgorithm.MD5.prefix) -> CryptAlgorithm.MD5.crypt(password, salt)
         salt.startsWith(CryptAlgorithm.XDES.prefix) -> CryptAlgorithm.XDES.crypt(password, salt.toCharArray())
-        else -> CryptAlgorithm.DES.crypt(password, salt.toCharArray())
+        else -> CryptAlgorithm.DES.crypt(password, salt)
     }
 }
