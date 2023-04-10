@@ -31,8 +31,14 @@ tasks.test {
     useJUnitPlatform()
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+val jvmTarget = "1.8"
+
+tasks.withType<JavaCompile>().configureEach {
+    targetCompatibility = jvmTarget
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions.jvmTarget = jvmTarget
     kotlinOptions.freeCompilerArgs = listOf("-progressive")
 }
 
