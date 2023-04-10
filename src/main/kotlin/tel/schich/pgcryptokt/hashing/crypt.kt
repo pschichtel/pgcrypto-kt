@@ -2,6 +2,7 @@ package tel.schich.pgcryptokt.hashing
 
 import at.favre.lib.crypto.bcrypt.BCrypt
 import at.favre.lib.crypto.bcrypt.LongPasswordStrategies.truncate
+import org.apache.commons.codec.digest.Md5Crypt
 import tel.schich.pgcryptokt.base64ToBytes
 import tel.schich.pgcryptokt.bytesToBase64
 import tel.schich.pgcryptokt.calculateBase64Size
@@ -30,11 +31,8 @@ private fun des(password: ByteArray, salt: Int, count: Int): String {
 }
 
 sealed interface CryptAlgorithm {
-    fun genSalt(random: SecureRandom, iterationCount: Int?): String
-    fun crypt(password: String, saltChars: CharArray): String
-
     object DES : CryptAlgorithm {
-        override fun genSalt(random: SecureRandom, iterationCount: Int?): String {
+        fun genSalt(random: SecureRandom): String {
             val input = ByteArray(2)
             random.nextBytes(input)
             val salt = StringBuilder(2)
@@ -43,7 +41,7 @@ sealed interface CryptAlgorithm {
             return salt.toString()
         }
 
-        override fun crypt(password: String, saltChars: CharArray): String {
+        fun crypt(password: String, saltChars: CharArray): String {
             val salt = (base64Alphabet.indexOf(saltChars[0]) shl 6) or base64Alphabet.indexOf(saltChars[1])
             val passwordBytes = password.toByteArray(Charsets.UTF_8)
 
@@ -57,7 +55,7 @@ sealed interface CryptAlgorithm {
         private const val defaultIterationCount: Int = 725
         private const val maxIterationCount: Int = 16777215
 
-        override fun genSalt(random: SecureRandom, iterationCount: Int?): String {
+        fun genSalt(random: SecureRandom, iterationCount: Int?): String {
             val iterations = iterationCount ?: defaultIterationCount
             if (iterations < minIterationCount || iterations > maxIterationCount) {
                 error("iterations count of $iterations is not within $minIterationCount and $maxIterationCount")
@@ -74,7 +72,7 @@ sealed interface CryptAlgorithm {
             return salt.toString()
         }
 
-        override fun crypt(password: String, saltChars: CharArray): String {
+        fun crypt(password: String, saltChars: CharArray): String {
             val iterations = read24BitIntFromBase64(saltChars, 1, base64Alphabet)
             val salt = read24BitIntFromBase64(saltChars, 5, base64Alphabet)
             val passwordBytes = password.toByteArray(Charsets.UTF_8)
@@ -84,7 +82,7 @@ sealed interface CryptAlgorithm {
     object MD5 : CryptAlgorithm {
         const val prefix = "$1$"
 
-        override fun genSalt(random: SecureRandom, iterationCount: Int?): String {
+        fun genSalt(random: SecureRandom): String {
             val input = ByteArray(6)
             random.nextBytes(input)
             val salt = StringBuilder(prefix.length + calculateBase64Size(input.size))
@@ -93,8 +91,8 @@ sealed interface CryptAlgorithm {
             return salt.toString()
         }
 
-        override fun crypt(password: String, saltChars: CharArray): String {
-            TODO("MD5 not yet implemented")
+        fun crypt(password: String, salt: String): String {
+            return Md5Crypt.md5Crypt(password.toByteArray(Charsets.UTF_8), salt)
         }
     }
     object Blowfish : CryptAlgorithm {
@@ -109,7 +107,7 @@ sealed interface CryptAlgorithm {
 
         private val alphabet = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".toCharArray()
 
-        override fun genSalt(random: SecureRandom, iterationCount: Int?): String {
+        fun genSalt(random: SecureRandom, iterationCount: Int?): String {
             val iterations = iterationCount ?: defaultIterationCount
             if (iterations < minIterationCount || iterations > maxIterationCount) {
                 error("iterations count of $iterations is not within $minIterationCount and $maxIterationCount")
@@ -125,7 +123,7 @@ sealed interface CryptAlgorithm {
             return salt.toString()
         }
 
-        override fun crypt(password: String, saltChars: CharArray): String {
+        fun crypt(password: String, saltChars: CharArray): String {
             val hasher = when (saltChars[2]) {
                 'a' -> hasher
                 'x' -> legacyHasher
@@ -138,16 +136,14 @@ sealed interface CryptAlgorithm {
     }
 }
 
-private fun parseType(type: String): CryptAlgorithm = when (type) {
-    "des" -> CryptAlgorithm.DES
-    "xdes" -> CryptAlgorithm.XDES
-    "md5" -> CryptAlgorithm.MD5
-    "bf" -> CryptAlgorithm.Blowfish
-    else -> throw IllegalArgumentException("Unknown crypt algorithm: $type")
-}
-
 fun gen_salt(type: String, iter_count: Int? = null): String {
-    return parseType(type).genSalt(threadLocalSecureRandom.get(), iter_count)
+    return when (type) {
+        "des" -> CryptAlgorithm.DES.genSalt(threadLocalSecureRandom.get())
+        "xdes" -> CryptAlgorithm.XDES.genSalt(threadLocalSecureRandom.get(), iter_count)
+        "md5" -> CryptAlgorithm.MD5.genSalt(threadLocalSecureRandom.get())
+        "bf" -> CryptAlgorithm.Blowfish.genSalt(threadLocalSecureRandom.get(), iter_count)
+        else -> throw IllegalArgumentException("Unknown crypt algorithm: $type")
+    }
 }
 
 fun crypt(password: String, salt: String): String {
@@ -155,7 +151,7 @@ fun crypt(password: String, salt: String): String {
         salt.startsWith(CryptAlgorithm.Blowfish.prefix) -> CryptAlgorithm.Blowfish.crypt(password, salt.toCharArray())
         salt.startsWith(CryptAlgorithm.Blowfish.legacyPrefix) -> CryptAlgorithm.Blowfish.crypt(password, salt.toCharArray())
         salt.startsWith("$2$") -> throw IllegalArgumentException("Illegal salt given: $salt")
-        salt.startsWith(CryptAlgorithm.MD5.prefix) -> CryptAlgorithm.MD5.crypt(password, salt.toCharArray())
+        salt.startsWith(CryptAlgorithm.MD5.prefix) -> CryptAlgorithm.MD5.crypt(password, salt)
         salt.startsWith(CryptAlgorithm.XDES.prefix) -> CryptAlgorithm.XDES.crypt(password, salt.toCharArray())
         else -> CryptAlgorithm.DES.crypt(password, salt.toCharArray())
     }
