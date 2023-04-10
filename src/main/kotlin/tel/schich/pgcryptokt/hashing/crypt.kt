@@ -7,29 +7,11 @@ import org.apache.commons.codec.digest.UnixCrypt
 import tel.schich.pgcryptokt.base64ToBytes
 import tel.schich.pgcryptokt.bytesToBase64
 import tel.schich.pgcryptokt.calculateBase64Size
-import tel.schich.pgcryptokt.read24BitIntFromBase64
 import tel.schich.pgcryptokt.threadLocalSecureRandom
 import tel.schich.pgcryptokt.write24BitIntToBase64
 import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.spec.SecretKeySpec
 
 private val base64Alphabet = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray()
-
-
-private fun des(password: ByteArray, salt: Int, count: Int): String {
-    val algoName = "DESede"
-    val cipher = Cipher.getInstance("$algoName/ECB/NoPadding")
-    val keySpec = SecretKeySpec(password, algoName)
-    cipher.init(Cipher.ENCRYPT_MODE, keySpec)
-    val hash = cipher.doFinal(password)
-
-    // TODO this is definitely wrong
-
-    return StringBuilder()
-        .also { bytesToBase64(it, hash, 0, hash.size, base64Alphabet) }
-        .toString()
-}
 
 sealed interface CryptAlgorithm {
     object DES : CryptAlgorithm {
@@ -71,10 +53,7 @@ sealed interface CryptAlgorithm {
         }
 
         fun crypt(password: String, saltChars: CharArray): String {
-            val iterations = read24BitIntFromBase64(saltChars, 1, base64Alphabet)
-            val salt = read24BitIntFromBase64(saltChars, 5, base64Alphabet)
-            val passwordBytes = password.toByteArray(Charsets.UTF_8)
-            return des(passwordBytes, salt, iterations)
+            TODO("XDES not implemented")
         }
     }
     object MD5 : CryptAlgorithm {

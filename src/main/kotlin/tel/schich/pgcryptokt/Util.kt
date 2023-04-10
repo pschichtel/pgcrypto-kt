@@ -55,7 +55,7 @@ internal fun bytesToBase64(output: StringBuilder, input: ByteArray, offset: Int,
 
 internal fun calculateBase64Size(bytes: Int): Int = ceil((bytes * 8) / 6.0).toInt()
 
-fun base64ToBytes(input: CharArray, offset: Int, length: Int, alphabet: CharArray): ByteArray {
+internal fun base64ToBytes(input: CharArray, offset: Int, length: Int, alphabet: CharArray): ByteArray {
     fun lookupValue(char: Char): Int {
         val value = alphabet.indexOf(char)
         if (value == -1) {
