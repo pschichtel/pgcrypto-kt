@@ -1,5 +1,8 @@
 package tel.schich.pgcryptokt.hashing
 
+import at.favre.lib.crypto.bcrypt.BCrypt
+import at.favre.lib.crypto.bcrypt.LongPasswordStrategies.truncate
+import tel.schich.pgcryptokt.base64ToBytes
 import tel.schich.pgcryptokt.bytesToBase64
 import tel.schich.pgcryptokt.calculateBase64Size
 import tel.schich.pgcryptokt.threadLocalSecureRandom
@@ -72,9 +75,13 @@ sealed interface CryptAlgorithm {
     }
     object Blowfish : CryptAlgorithm {
         const val prefix = "$2a$"
+        const val legacyPrefix = "$2x$"
         private const val minIterationCount: Int = 4
         private const val defaultIterationCount: Int = 6
         private const val maxIterationCount: Int = 31
+
+        private val hasher = BCrypt.with(BCrypt.Version.VERSION_2A, truncate(BCrypt.Version.VERSION_2A))
+        private val legacyHasher = BCrypt.with(BCrypt.Version.VERSION_2X, truncate(BCrypt.Version.VERSION_2X))
 
         private val alphabet = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".toCharArray()
 
@@ -86,16 +93,24 @@ sealed interface CryptAlgorithm {
             val input = ByteArray(16)
             random.nextBytes(input)
             val salt = StringBuilder(prefix.length + 3 + calculateBase64Size(input.size))
+            salt.append(prefix)
             salt.append('0' + iterations / 10)
             salt.append('0' + iterations % 10)
             salt.append('$')
-            salt.append(prefix)
             bytesToBase64(salt, input, 0, input.size, alphabet)
             return salt.toString()
         }
 
         override fun crypt(password: String, salt: String): String {
-            TODO("Blowflish not yet implemented")
+            val saltChars = salt.toCharArray()
+            val hasher = when (saltChars[2]) {
+                'a' -> hasher
+                'x' -> legacyHasher
+                else -> error("Unsupported salt '$salt' !")
+            }
+            val cost = saltChars[4].digitToInt() * 10 + saltChars[5].digitToInt()
+            val saltBytes = base64ToBytes(saltChars, 7, saltChars.size - 7, alphabet)
+            return String(hasher.hash(cost, saltBytes, password.toByteArray(Charsets.UTF_8)), Charsets.UTF_8)
         }
     }
 }
@@ -114,7 +129,8 @@ fun gen_salt(type: String, iter_count: Int? = null): String {
 
 fun crypt(password: String, salt: String): String {
     return when {
-        salt.startsWith(CryptAlgorithm.Blowfish.prefix) || salt.startsWith("$2x$") -> CryptAlgorithm.Blowfish.crypt(password, salt)
+        salt.startsWith(CryptAlgorithm.Blowfish.prefix) -> CryptAlgorithm.Blowfish.crypt(password, salt)
+        salt.startsWith(CryptAlgorithm.Blowfish.legacyPrefix) -> CryptAlgorithm.Blowfish.crypt(password, salt)
         salt.startsWith("$2$") -> throw IllegalArgumentException("Illegal salt given: $salt")
         salt.startsWith(CryptAlgorithm.MD5.prefix) -> CryptAlgorithm.MD5.crypt(password, salt)
         salt.startsWith(CryptAlgorithm.XDES.prefix) -> CryptAlgorithm.XDES.crypt(password, salt)

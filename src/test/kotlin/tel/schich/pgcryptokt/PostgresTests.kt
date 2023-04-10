@@ -555,7 +555,6 @@ class PostgresTests {
         test(algo = "bf", mode = "ecb", padding = "none")
     }
 
-    @Disabled
     @Test
     fun cryptWithLocalSalt() {
         val password = "0123456789012345"
@@ -574,9 +573,9 @@ class PostgresTests {
             assertEquals(pgHashWithPgSalt, localHashWithPgSalt)
         }
 
-        test(type = "des")
-        test(type = "xdes")
-        test(type = "md5")
+//        test(type = "des")
+//        test(type = "xdes")
+//        test(type = "md5")
         test(type = "bf")
     }
 

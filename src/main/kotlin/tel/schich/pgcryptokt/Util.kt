@@ -1,5 +1,6 @@
 package tel.schich.pgcryptokt
 
+import java.io.ByteArrayOutputStream
 import java.security.SecureRandom
 import kotlin.math.ceil
 
@@ -46,3 +47,44 @@ internal fun bytesToBase64(output: StringBuilder, input: ByteArray, offset: Int,
 }
 
 internal fun calculateBase64Size(bytes: Int): Int = ceil((bytes * 8) / 6.0).toInt()
+
+fun base64ToBytes(input: CharArray, offset: Int, length: Int, alphabet: CharArray): ByteArray {
+    fun lookupValue(char: Char): Int {
+        val value = alphabet.indexOf(char)
+        if (value == -1) {
+            error("Character $char is not in alphabet: $alphabet")
+        }
+        return value
+    }
+
+    val outputSize = calculateByteSize(length)
+    val output = ByteArrayOutputStream(outputSize)
+
+    var i = 0
+    var c1: Int
+    var c2: Int
+    while (i < length && output.size() < outputSize) {
+        c1 = lookupValue(input[offset + i++])
+        if (i >= length) {
+            break
+        }
+        c2 = lookupValue(input[offset + i++])
+        output.write((c1 shl 2) or (c2 shr 4))
+        c1 = c2 and 0b1111
+        if (i >= length || output.size() >= outputSize) {
+            break
+        }
+        c2 = lookupValue(input[offset + i++])
+        output.write((c1 shl 4) or (c2 shr 2))
+        c1 = c2 and 0b11
+        if (i >= length || output.size() >= outputSize) {
+            break
+        }
+        c2 = lookupValue(input[offset + i++])
+        output.write((c1 shl 6) or c2)
+    }
+
+    return output.toByteArray()
+}
+
+internal fun calculateByteSize(base64Chars: Int): Int = (base64Chars * 6) / 8
