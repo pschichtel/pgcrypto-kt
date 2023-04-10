@@ -6,11 +6,18 @@ import kotlin.math.ceil
 
 internal val threadLocalSecureRandom = ThreadLocal.withInitial { SecureRandom() }
 
-internal fun threeBytesFromIntToBase64(output: StringBuilder, value: Int, alphabet: CharArray) {
-    output.append(alphabet[value and 0x3f])
-    output.append(alphabet[(value shr 6) and 0x3f])
-    output.append(alphabet[(value shr 12) and 0x3f])
-    output.append(alphabet[(value shr 18) and 0x3f])
+internal fun write24BitIntToBase64(output: StringBuilder, value: Int, alphabet: CharArray) {
+    val data = byteArrayOf(
+        ((value shr 16) and 0xFF).toByte(),
+        ((value shr 8) and 0xFF).toByte(),
+        (value and 0xFF).toByte(),
+    )
+    bytesToBase64(output, data, 0, data.size, alphabet)
+}
+
+internal fun read24BitIntFromBase64(input: CharArray, offset: Int, alphabet: CharArray): Int {
+    val (a, b, c) = base64ToBytes(input, offset, 4, alphabet)
+    return (a.toUByte().toInt() shl 16) or (b.toUByte().toInt() shl 8) or c.toUByte().toInt()
 }
 
 /**

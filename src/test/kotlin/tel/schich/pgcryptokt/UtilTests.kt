@@ -41,4 +41,13 @@ class UtilTests {
 
         assertContentEquals(input, decoded)
     }
+
+    @Test
+    fun intToBase64RoundTrip() {
+        val number = 5
+        val base64Chars = StringBuilder().also { write24BitIntToBase64(it, number, alphabet) }.toString().toCharArray()
+        val parsedNumber = read24BitIntFromBase64(base64Chars, 0, alphabet)
+
+        assertEquals(number, parsedNumber)
+    }
 }
