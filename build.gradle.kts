@@ -20,8 +20,14 @@ repositories {
 dependencies {
     implementation(platform("org.testcontainers:testcontainers-bom:1.18.0"))
     implementation("org.bouncycastle:bcpg-jdk18on:1.72.2")
-    implementation("at.favre.lib:bcrypt:0.10.2")
-    implementation("commons-codec:commons-codec:1.15")
+    "at.favre.lib:bcrypt:0.10.2".let {
+        compileOnly(it)
+        testImplementation(it)
+    }
+    "commons-codec:commons-codec:1.15".let {
+        compileOnly(it)
+        testImplementation(it)
+    }
 
     testImplementation(kotlin("test"))
     testImplementation("org.testcontainers:junit-jupiter")
