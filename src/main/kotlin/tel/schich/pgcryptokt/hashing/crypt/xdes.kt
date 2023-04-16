@@ -29,6 +29,11 @@ internal fun generateXdesSalt(random: SecureRandom, iterationCount: Int?): Strin
     return salt.toString()
 }
 
+/**
+ * Also called:
+ * * bsdicrypt
+ * * extended DES
+ */
 internal fun xdes(password: String, saltChars: CharArray): String {
-    TODO("XDES not implemented")
+    TODO("XDES is not implemented and not recommended, but PRs are welcome if you need this!")
 }
