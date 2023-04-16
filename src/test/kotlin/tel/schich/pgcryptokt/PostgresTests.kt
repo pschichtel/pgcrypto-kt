@@ -4,7 +4,6 @@ import org.bouncycastle.bcpg.ArmoredInputStream
 import org.bouncycastle.openpgp.PGPPublicKeyRingCollection
 import org.bouncycastle.openpgp.PGPSecretKeyRingCollection
 import org.intellij.lang.annotations.Language
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.postgresql.ds.PGSimpleDataSource
 import org.testcontainers.containers.PostgreSQLContainer
