@@ -24,4 +24,4 @@ jobs:
         env:
           PG_IMAGE_TAG: ${{ matrix.pg_image }}
         with:
-          arguments: test
+          arguments: test --stacktrace
