@@ -19,13 +19,13 @@ repositories {
 }
 
 dependencies {
-    implementation(platform("org.testcontainers:testcontainers-bom:1.18.3"))
-    implementation("org.bouncycastle:bcpg-jdk18on:1.74")
+    implementation(platform("org.testcontainers:testcontainers-bom:1.19.1"))
+    implementation("org.bouncycastle:bcpg-jdk18on:1.76")
     "at.favre.lib:bcrypt:0.10.2".let {
         compileOnly(it)
         testImplementation(it)
     }
-    "commons-codec:commons-codec:1.15".let {
+    "commons-codec:commons-codec:1.16.0".let {
         compileOnly(it)
         testImplementation(it)
     }
@@ -34,7 +34,7 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.postgresql:postgresql:42.6.0")
-    testImplementation("org.slf4j:slf4j-simple:2.0.7")
+    testImplementation("org.slf4j:slf4j-simple:2.0.9")
 }
 
 tasks.test {
