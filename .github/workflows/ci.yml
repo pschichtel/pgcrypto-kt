@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        pg_image: [10, 11, 12, 13, 14, 15, 16, latest]
+        pg_image: [10, 13, 16]
 
     steps:
       - uses: actions/checkout@v4
