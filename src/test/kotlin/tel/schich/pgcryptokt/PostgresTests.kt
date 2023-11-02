@@ -573,7 +573,9 @@ class PostgresTests {
         }
 
         test(type = "des")
-//        test(type = "xdes")
+        assertThrows<NotImplementedError> {
+            test(type = "xdes")
+        }
         test(type = "md5")
         test(type = "bf")
     }
