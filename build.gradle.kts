@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "tel.schich"
-version = "1.1.1-SNAPSHOT"
+version = "1.2.0"
 
 repositories {
     mavenCentral()
