@@ -25,7 +25,7 @@ dependencies {
         compileOnly(it)
         testImplementation(it)
     }
-    "commons-codec:commons-codec:1.16.0".let {
+    "commons-codec:commons-codec:1.17.1".let {
         compileOnly(it)
         testImplementation(it)
     }
