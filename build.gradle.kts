@@ -20,7 +20,7 @@ repositories {
 
 dependencies {
     implementation(platform("org.testcontainers:testcontainers-bom:1.19.1"))
-    implementation("org.bouncycastle:bcpg-jdk18on:1.76")
+    implementation("org.bouncycastle:bcpg-jdk18on:1.79")
     "at.favre.lib:bcrypt:0.10.2".let {
         compileOnly(it)
         testImplementation(it)
