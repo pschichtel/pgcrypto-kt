@@ -34,7 +34,7 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.postgresql:postgresql:42.7.4")
-    testImplementation("org.slf4j:slf4j-simple:2.0.9")
+    testImplementation("org.slf4j:slf4j-simple:2.0.16")
 }
 
 tasks.test {
