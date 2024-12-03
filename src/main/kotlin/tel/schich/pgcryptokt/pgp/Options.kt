@@ -11,7 +11,7 @@ enum class CipherAlgo(val tag: Int) {
     AES128(SymmetricKeyAlgorithmTags.AES_128),
     AES192(SymmetricKeyAlgorithmTags.AES_192),
     AES256(SymmetricKeyAlgorithmTags.AES_256),
-    `3DES`(SymmetricKeyAlgorithmTags.TRIPLE_DES),
+    ThreeDES(SymmetricKeyAlgorithmTags.TRIPLE_DES),
     CAST5(SymmetricKeyAlgorithmTags.CAST5),
 }
 
@@ -103,9 +103,7 @@ private fun parseOptions(optionsString: String): MutableMap<String, String> {
         .filter { it.isNotBlank() }
         .associate { option ->
             val equalsPosition = option.indexOf('=')
-            if (equalsPosition == -1) {
-                throw IllegalArgumentException("Failed to parse option: <$option> in <$optionsString>: Missing equals sign")
-            }
+            require(equalsPosition != -1) { "Failed to parse option: <$option> in <$optionsString>: Missing equals sign" }
 
             Pair(option.substring(0, equalsPosition).trim().lowercase(), option.substring(equalsPosition + 1).trim())
         }
@@ -128,9 +126,7 @@ private fun parseS2kCountOption(options: MutableMap<String, String>): S2kIterati
     } catch (e: NumberFormatException) {
         throw IllegalArgumentException("Failed to parse option s2k-count: value <$value> is not a number!", e)
     }
-    if (intValue !in S2kIterationCount.ValidRange) {
-        throw IllegalArgumentException("Failed to parse option s2k-count: value <$intValue> is out of range!")
-    }
+    require(intValue in S2kIterationCount.ValidRange) { "Failed to parse option s2k-count: value <$intValue> is out of range!" }
     return S2kIterationCount(intValue)
 }
 
@@ -144,7 +140,7 @@ private val cipherAlgoMappings = mapOf(
     "aes128" to CipherAlgo.AES128,
     "aes192" to CipherAlgo.AES192,
     "aes256" to CipherAlgo.AES256,
-    "3des" to CipherAlgo.`3DES`,
+    "3des" to CipherAlgo.ThreeDES,
     "cast5" to CipherAlgo.CAST5,
 )
 

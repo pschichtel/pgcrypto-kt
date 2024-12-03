@@ -1,3 +1,5 @@
+@file:Suppress("FunctionNaming", "FunctionName")
+
 package tel.schich.pgcryptokt.pgp
 
 import org.bouncycastle.bcpg.ArmoredInputStream
@@ -5,9 +7,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
 fun armor(data: ByteArray, keys: Array<String> = emptyArray(), values: Array<String> = emptyArray()): String {
-    if (keys.size != values.size) {
-        throw IllegalArgumentException("keys (${keys.size} items) and values (${values.size} items) must have an equal amount of items")
-    }
+    require(keys.size == values.size) { "keys (${keys.size} items) and values (${values.size} items) must have an equal amount of items" }
     val output = ByteArrayOutputStream()
 
     val headers = if (keys.isEmpty()) emptyList() else keys.zip(values)

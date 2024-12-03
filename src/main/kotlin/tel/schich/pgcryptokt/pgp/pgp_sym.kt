@@ -1,3 +1,5 @@
+@file:Suppress("FunctionNaming", "FunctionName")
+
 package tel.schich.pgcryptokt.pgp
 
 import java.nio.charset.Charset

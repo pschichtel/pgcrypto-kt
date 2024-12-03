@@ -1,3 +1,5 @@
+@file:Suppress("FunctionNaming", "FunctionName")
+
 package tel.schich.pgcryptokt.pgp
 
 import org.bouncycastle.openpgp.PGPPBEEncryptedData
@@ -27,7 +29,7 @@ fun pgp_key_id(data: ByteArray): String {
             when (it) {
                 is PGPPBEEncryptedData -> "SYMKEY"
                 is PGPPublicKeyEncryptedData ->
-                    it.keyID.toULong().toString(16).uppercase().padStart(16, '0')
+                    it.keyIdentifier.keyId.toString(16).uppercase().padStart(16, '0')
                 else -> null
             }
         }

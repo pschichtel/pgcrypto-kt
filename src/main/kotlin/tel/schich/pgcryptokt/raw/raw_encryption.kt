@@ -1,3 +1,5 @@
+@file:Suppress("FunctionNaming", "FunctionName")
+
 package tel.schich.pgcryptokt.raw
 
 import javax.crypto.Cipher

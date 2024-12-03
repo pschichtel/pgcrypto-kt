@@ -53,7 +53,7 @@ fun decrypt(data: ByteArray, mode: DecryptionMode, textMode: Boolean): ByteArray
                 encryptedData
                     .filterIsInstance<PGPPublicKeyEncryptedData>()
                     .map {
-                        val secretKey = secretKeyLookup[it.keyID]
+                        val secretKey = secretKeyLookup[it.keyIdentifier.keyId]
                             ?: error("Wrong secret key way given!")
 
                         val secretKeyDecryptor = secretKeyDecryptorBuilder.build(mode.password)

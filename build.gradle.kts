@@ -1,14 +1,14 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     signing
     java
     `maven-publish`
-    kotlin("jvm")
-    id("org.jetbrains.dokka")
-    id("io.github.gradle-nexus.publish-plugin")
-    id("io.gitlab.arturbosch.detekt")
+    alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.nexusPublishing)
+    alias(libs.plugins.detekt)
 }
 
 group = "tel.schich"
@@ -19,22 +19,21 @@ repositories {
 }
 
 dependencies {
-    implementation(platform("org.testcontainers:testcontainers-bom:1.19.1"))
-    implementation("org.bouncycastle:bcpg-jdk18on:1.79")
-    "at.favre.lib:bcrypt:0.10.2".let {
+    implementation(libs.bouncyCastleBcpg)
+    libs.bcrypt.let {
         compileOnly(it)
         testImplementation(it)
     }
-    "commons-codec:commons-codec:1.17.1".let {
+    libs.commonsCodec.let {
         compileOnly(it)
         testImplementation(it)
     }
 
     testImplementation(kotlin("test"))
-    testImplementation("org.testcontainers:junit-jupiter")
-    testImplementation("org.testcontainers:postgresql")
-    testImplementation("org.postgresql:postgresql:42.7.4")
-    testImplementation("org.slf4j:slf4j-simple:2.0.9")
+    testImplementation(libs.testContainersJunitJupiter)
+    testImplementation(libs.testContainersPostgresql)
+    testImplementation(libs.postgresqlDriver)
+    testImplementation(libs.slf4jSimple)
 }
 
 tasks.test {
@@ -46,15 +45,12 @@ tasks.test {
     }
 }
 
-val jvmTarget = "1.8"
+kotlin {
+    jvmToolchain(8)
 
-tasks.withType<JavaCompile>().configureEach {
-    targetCompatibility = jvmTarget
-}
-
-tasks.withType<KotlinCompile>().configureEach {
-    kotlinOptions.jvmTarget = jvmTarget
-    kotlinOptions.freeCompilerArgs = listOf("-progressive")
+    compilerOptions {
+        jvmTarget = JvmTarget.fromTarget("1.8")
+    }
 }
 
 repositories {
@@ -115,4 +111,11 @@ nexusPublishing {
     repositories {
         sonatype()
     }
+}
+
+detekt {
+    basePath = rootDir.absolutePath
+    config.setFrom("$rootDir/detekt.yml")
+    parallel = true
+    buildUponDefaultConfig = true
 }

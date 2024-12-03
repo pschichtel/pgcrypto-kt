@@ -1,3 +1,5 @@
+@file:Suppress("FunctionNaming", "FunctionName", "FunctionParameterNaming", "LocalVariableName")
+
 package tel.schich.pgcryptokt.hashing
 
 import tel.schich.pgcryptokt.hashing.crypt.BLOWFISH_LEGACY_PREFIX

@@ -8,14 +8,14 @@ import java.security.SecureRandom
 
 internal const val XDES_PREFIX = "_"
 
-private const val minIterationCount: Int = 1
-private const val defaultIterationCount: Int = 725
-private const val maxIterationCount: Int = 16777215
+private const val MIN_ITERATION_COUNT: Int = 1
+private const val DEFAULT_ITERATION_COUNT: Int = 725
+private const val MAX_ITERATION_COUNT: Int = 16777215
 
 internal fun generateXdesSalt(random: SecureRandom, iterationCount: Int?): String {
-    val iterations = iterationCount ?: defaultIterationCount
-    if (iterations < minIterationCount || iterations > maxIterationCount) {
-        error("iterations count of $iterations is not within $minIterationCount and $maxIterationCount")
+    val iterations = iterationCount ?: DEFAULT_ITERATION_COUNT
+    if (iterations < MIN_ITERATION_COUNT || iterations > MAX_ITERATION_COUNT) {
+        error("iterations count of $iterations is not within $MIN_ITERATION_COUNT and $MAX_ITERATION_COUNT")
     }
     if ((iterations and 1) == 0) {
         error("iterations count of $iterations is not odd")
@@ -34,6 +34,7 @@ internal fun generateXdesSalt(random: SecureRandom, iterationCount: Int?): Strin
  * * bsdicrypt
  * * extended DES
  */
+@Suppress("UNUSED_PARAMETER")
 internal fun xdes(password: String, saltChars: CharArray): String {
     TODO("XDES is not implemented and not recommended, but PRs are welcome if you need this!")
 }

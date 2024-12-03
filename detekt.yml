@@ -1,0 +1,15 @@
+complexity:
+  CyclomaticComplexMethod:
+    active: false
+  LongMethod:
+    active: false
+style:
+  MagicNumber:
+    active: false
+  MaxLineLength:
+    active: false
+  LoopWithTooManyJumpStatements:
+    active: false
+exceptions:
+  TooGenericExceptionCaught:
+    active: false

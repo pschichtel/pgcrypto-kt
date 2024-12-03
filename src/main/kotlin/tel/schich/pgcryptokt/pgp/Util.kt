@@ -5,12 +5,6 @@ import org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator
 import org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyDecryptorBuilder
 import org.bouncycastle.openpgp.operator.bc.BcPGPDigestCalculatorProvider
 
-enum class DataType {
-    TEXT,
-    UNICODE,
-    BINARY,
-}
-
 val fingerprintCalculator = BcKeyFingerprintCalculator()
 val digestCalculatorProvider = BcPGPDigestCalculatorProvider()
 val secretKeyDecryptorBuilder = BcPBESecretKeyDecryptorBuilder(digestCalculatorProvider)

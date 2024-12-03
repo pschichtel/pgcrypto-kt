@@ -51,12 +51,8 @@ fun encrypt(data: ByteArray, mode: EncryptionMode, dataType: DataType): ByteArra
                 .filter { it.isEncryptionKey && !it.isMasterKey }
                 .toList()
 
-            if (keys.isEmpty()) {
-                throw IllegalArgumentException("No public keys detected in key!")
-            }
-            if (keys.size > 1) {
-                throw IllegalArgumentException("Multiple public keys detected in key!")
-            }
+            require(keys.isNotEmpty()) { "No public keys detected in key!" }
+            require(keys.size <= 1) { "Multiple public keys detected in key!" }
 
             BcPublicKeyKeyEncryptionMethodGenerator(keys.first())
         }

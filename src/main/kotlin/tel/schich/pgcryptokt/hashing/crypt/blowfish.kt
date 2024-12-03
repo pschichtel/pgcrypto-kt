@@ -9,9 +9,9 @@ import java.security.SecureRandom
 
 internal const val BLOWFISH_PREFIX = "$2a$"
 internal const val BLOWFISH_LEGACY_PREFIX = "$2x$"
-private const val minIterationCount: Int = 4
-private const val defaultIterationCount: Int = 6
-private const val maxIterationCount: Int = 31
+private const val MIN_ITERATION_COUNT: Int = 4
+private const val DEFAULT_ITERATION_COUNT: Int = 6
+private const val MAX_ITERATION_COUNT: Int = 31
 
 private val hasher = BCrypt.with(BCrypt.Version.VERSION_2A, LongPasswordStrategies.truncate(BCrypt.Version.VERSION_2A))
 private val legacyHasher = BCrypt.with(
@@ -22,9 +22,9 @@ private val legacyHasher = BCrypt.with(
 private val alphabet = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".toCharArray()
 
 internal fun generateBlowfishSalt(random: SecureRandom, iterationCount: Int?): String {
-    val iterations = iterationCount ?: defaultIterationCount
-    if (iterations < minIterationCount || iterations > maxIterationCount) {
-        error("iterations count of $iterations is not within $minIterationCount and $maxIterationCount")
+    val iterations = iterationCount ?: DEFAULT_ITERATION_COUNT
+    if (iterations < MIN_ITERATION_COUNT || iterations > MAX_ITERATION_COUNT) {
+        error("iterations count of $iterations is not within $MIN_ITERATION_COUNT and $MAX_ITERATION_COUNT")
     }
     val input = ByteArray(16)
     random.nextBytes(input)
